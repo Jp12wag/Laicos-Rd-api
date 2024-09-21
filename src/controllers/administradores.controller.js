@@ -151,9 +151,6 @@ controllers.logoutadministrador = async (req, res) => {
 };
 
 
-
-
-
 controllers.updateAdministrador = async (req, res) => {
   try {
     const administradorActualizado = await Administrador.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -175,6 +172,72 @@ controllers.deleteAdministrador = async (req, res) => {
     res.status(200).json({ message: 'Administrador eliminado' });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+
+controllers.requestResetPassword = async (req, res) => {
+  const { email } = req.body;
+ 
+  try {
+    const administrador = await Administrador.findOne({ email });
+   
+    if (!administrador) {
+      return res.status(404).send({ error: 'Administrador no encontrado' });
+    }
+    // Generar un token para el restablecimiento de contraseña (puedes usar JWT o cualquier otro mecanismo)
+    const resetToken = administrador.generatePasswordResetToken(); // Implementa esto en el modelo
+    await administrador.save();  
+    console.log(resetToken);
+    // Configuración del transportador de Nodemailer
+    const transporter = nodemailer.createTransport({
+      host: 'smtp-mail.outlook.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: 'wagner12alcantara@hotmail.com',
+        pass: 'JP1212@11'
+      }
+    });
+
+    const mailOptions = {
+      from: 'wagner12alcantara@hotmail.com',
+      to: administrador.email,
+      subject: 'Restablecer contraseña',
+      html: `<p>Haz clic en el siguiente enlace para restablecer tu contraseña:</p>
+             <a href="http://localhost:3000/reset-password/${resetToken}">Restablecer contraseña</a>`
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).send({ message: 'Correo de restablecimiento de contraseña enviado.' });
+
+  } catch (error) {
+    res.status(500).send({ error: 'Ocurrió un error al enviar el correo de restablecimiento.' });
+  }
+};
+
+controllers.resetPassword = async (req, res) => {
+  const { newPassword } = req.body;
+  const { token } = req.params;
+
+  try {
+    // Busca al administrador por el token y verifica que sea válido
+    const administrador = await Administrador.findByPasswordResetToken(token);
+    console.log(administrador)
+    if (!administrador) {
+      return res.status(400).send({ error: 'Token de restablecimiento inválido o expirado.' });
+    }
+
+    // Actualiza la contraseña
+    administrador.password = newPassword;
+    administrador.passwordResetToken = null; // Elimina el token de restablecimiento
+    await administrador.save();
+
+    res.status(200).send({ message: 'Contraseña restablecida con éxito.' });
+
+  } catch (error) {
+    res.status(500).send({ error: 'Ocurrió un error al restablecer la contraseña.' });
   }
 };
 
