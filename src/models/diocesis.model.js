@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 
-const diocesisSchema = new Schema({
+const diocesisSchema = new mongoose.Schema({
   idUnidadEpiscopal: { 
-    type: Schema.Types.ObjectId, 
+    type: mongoose.Schema.Types.ObjectId, 
     ref: 'UnidadEpiscopal', 
     required: true 
   },
