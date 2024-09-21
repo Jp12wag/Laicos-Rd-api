@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
-const obispoSchema = new Schema({
+const obispoSchema = new mongoose.Schema({
   idDiocesis:      { 
-    type: Schema.Types.ObjectId, 
+    type: mongoose.Schema.Types.ObjectId, 
     ref: 'Diocesis', 
     required: true 
   },

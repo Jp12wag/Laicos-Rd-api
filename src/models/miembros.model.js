@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
-const miembroSchema = new Schema({
+const miembroSchema = new mongoose.Schema({
   idParroquia: { 
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Parroquia',
-    required: true 
+    required: false 
   },
   nombre: { 
     type: String, 

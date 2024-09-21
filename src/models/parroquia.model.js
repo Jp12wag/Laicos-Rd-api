@@ -1,9 +1,9 @@
 const mongoose = require('mongoose')
 
-const parroquiaSchema = new Schema({
-  idMiembro: { type: Schema.Types.ObjectId, ref: 'Miembro' },
-  idClero: { type: Schema.Types.ObjectId, ref: 'Clero' },
-  idLaico: { type: Schema.Types.ObjectId, ref: 'Miembro' },
+const parroquiaSchema = new mongoose.Schema({
+  idMiembro: { type: mongoose.Schema.Types.ObjectId, ref: 'Miembro' },
+  idClero: { type: mongoose.Schema.Types.ObjectId, ref: 'Clero' },
+  idLaico: { type: mongoose.Schema.Types.ObjectId, ref: 'Miembro' },
   nombre: { type: String, required: true },
   telefono: { type: String, required: true },
   email: { type: String, required: true },
