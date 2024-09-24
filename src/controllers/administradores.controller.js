@@ -187,8 +187,10 @@ controllers.requestResetPassword = async (req, res) => {
     }
     // Generar un token para el restablecimiento de contraseña (puedes usar JWT o cualquier otro mecanismo)
     const resetToken = administrador.generatePasswordResetToken(); // Implementa esto en el modelo
+    //cambiar logica de para buscar el token 
+
+
     await administrador.save();  
-    console.log(resetToken);
     // Configuración del transportador de Nodemailer
     const transporter = nodemailer.createTransport({
       host: 'smtp-mail.outlook.com',
@@ -199,6 +201,8 @@ controllers.requestResetPassword = async (req, res) => {
         pass: 'JP1212@11'
       }
     });
+//verificar variable globales
+
 
     const mailOptions = {
       from: 'wagner12alcantara@hotmail.com',
