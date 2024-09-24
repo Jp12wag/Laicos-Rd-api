@@ -11,5 +11,7 @@ router.post('/logout', auth, controllers.logoutadministrador)
 router.get('/:id',auth, controllers.getAdministradorById);
 router.put('/:id',auth, controllers.updateAdministrador);
 router.delete('/:id',auth, controllers.deleteAdministrador);
+router.post('/request-reset-password', controllers.requestResetPassword);
+router.post('/reset-password/:token', controllers.resetPassword);
 
 module.exports = router;
