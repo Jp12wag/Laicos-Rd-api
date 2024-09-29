@@ -155,22 +155,23 @@ controllers.logoutadministrador = async (req, res) => {
 
 
 controllers.updateAdministrador = async (req, res) => {
+  console.log("Datos recibidos para actualizar:", req.body);
   const allowedUpdates = ['nombre', 'apellido', 'email', 'celular', 'nacimiento', 'foto']; // Campos permitidos para actualizar
-  const updates = Object.keys(req.body); // Claves de los datos enviados
-  const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
-  console.log(isValidOperation)
-  if (!isValidOperation) {
-    return res.status(400).json({ message: 'Actualización no permitida para algunos campos' });
-  }
 
+  const updates = Object.keys(req.body); // Claves de los datos enviados
+  const filteredBody = updates.reduce((filtered, key) => {
+    if (allowedUpdates.includes(key)) {
+      filtered[key] = req.body[key];
+    }
+    return filtered;
+  }, {});
   try {
     const administradorActualizado = await Administrador.findByIdAndUpdate(
       req.params.id,
-      req.body,
-      { new: true, runValidators: true } // new: true para devolver el documento actualizado, runValidators para validar los datos
+      filteredBody,
+      { new: true, runValidators: true }
     );
 
-    console.log(administradorActualizado)
     if (!administradorActualizado) {
       return res.status(404).json({ message: 'Administrador no encontrado' });
     }
