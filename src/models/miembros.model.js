@@ -24,6 +24,7 @@ const miembroSchema = new mongoose.Schema({
   },
   email: {
      type: String, 
+     unique: true,
      required: true 
   },
   celular: { 

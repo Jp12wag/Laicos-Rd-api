@@ -105,14 +105,27 @@ controllers.deleteMiembro = async (req, res) => {
 
 controllers.getMiembroPorCorreo = async (req, res) => {
   try {
-    console.log(req.body.email);
-    const miembro = await Miembro.findOne({ email: req.body.email });
-    console.log(miembro);
+    const { email } = req.body;
+
+    // Verifica que el email está presente
+    if (!email) {
+      return res.status(400).json({ message: 'Email es requerido' });
+    }
+
+    console.log('Buscando miembro con email:', email);
+
+    // Busca el miembro por email
+    const miembro = await Miembro.findOne({ email: email });
+
+    // Si no se encuentra el miembro, retorna un error 404
     if (!miembro) {
       return res.status(404).json({ message: 'Miembro no encontrado' });
     }
-    res.json(miembro).status(200);
+
+    // Si se encuentra, retorna el miembro
+    res.status(200).json(miembro);
   } catch (error) {
+    console.error('Error en la búsqueda de miembro por correo:', error);
     res.status(500).json({ message: 'Error en el servidor', error });
   }
 }
