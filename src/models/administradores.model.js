@@ -3,25 +3,23 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const speakeasy = require('speakeasy'); // Para 2FA
 const mongoose = require('mongoose')
-
-
 const administradorSchema = new mongoose.Schema({
-  nombre: { 
-    type: String, 
-    required: true 
+  nombre: {
+    type: String,
+    required: true
   },
   apellido: {
-    type: String, 
-    required: true 
+    type: String,
+    required: true
   },
-  sexo: { 
-    type: String, 
-    required: true 
+  sexo: {
+    type: String,
+    required: true
   },
-  email: { 
+  email: {
     type: String,
     unique: true,
-    required: false,
+    required: true,
     trim: true,
     lowercase: true,
     validate(value) {
@@ -30,22 +28,22 @@ const administradorSchema = new mongoose.Schema({
       }
     }
   },
-  celular: { 
-    type: String, 
-    required: true 
-  },
-  nacimiento: { 
-    type: Date, 
-    required: true 
-  },
-  rolUsuario: { 
+  celular: {
     type: String,
-    default:"miembro", 
-    required: false 
+    required: true
   },
-  foto: { 
+  nacimiento: {
+    type: Date,
+    required: true
+  },
+  rolUsuario: {
     type: String,
-    default:null, 
+    default: "miembro",
+    required: false
+  },
+  foto: {
+    type: String,
+    default: null,
   },
   password: {
     type: String,
@@ -68,76 +66,88 @@ const administradorSchema = new mongoose.Schema({
     type: String,
     required: false // Este campo se utilizará para almacenar el secreto de 2FA
   },
-  fechaRegistro: { 
+  fechaRegistro: {
     type: Date,
-    default: Date.now 
+    default: Date.now
   },
-  esMiembro: { 
+  esMiembro: {
     type: Boolean,
-    default: false 
+    default: false
   }
-  })
+})
+administradorSchema.pre('save', async function (next) {
+  const admin = this;
 
-  administradorSchema.pre('save', async function (next) {
-    const admin = this;
-  
-    // Hashea la contraseña solo si ha sido modificada o si es nueva
-    if (admin.isModified('password')) {
+  if (admin.isModified('password')) {
+    try {
       admin.password = await bcrypt.hash(admin.password, 8);
+    } catch (error) {
+      return next(error);
     }
-  
-    next();
-  });
-  administradorSchema.methods.toJSON = function () {
-    const admin = this
-    const adminObject = admin.toObject()
-  
-    delete adminObject.password
-    delete adminObject.tokens
-  
-    return adminObject
   }
-  // Método para generar dos factores
-  administradorSchema.methods.enableTwoFactorAuth = function () {
-    const secret = speakeasy.generateSecret({ length: 20 });
-    this.twoFactorSecret = secret.base32; // Almacena solo el secreto
-    return secret;
-  };
-  
-  // Método para generar token de autenticación
-  administradorSchema.methods.generateAuthToken = async function () {
-    const admin = this;
-    const token = jwt.sign({ _id: admin._id.toString() }, 'laicosrd', { expiresIn: '1h' });
-    admin.tokens = admin.tokens.concat({ token });
-    await admin.save();
-    return token;
-  };
-  
-  // Método para encontrar usuario por credenciales
-  administradorSchema.statics.findByCredentials = async (email, password) => {
-    const admin = await Admin.findOne({ email });
-    console.log(admin);
-    if (!admin) {
-      throw new Error('Credenciales inválidas');
-    }
-    const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) {
-      throw new Error('Credenciales inválidas');
-    }
-    console.log(admin);
-    return admin;
-  };
-  
-  // Método para verificar el token 2FA
-  administradorSchema.methods.verifyTwoFactorToken = function (token) {
-  
-    return speakeasy.totp.verify({
-      secret: this.twoFactorSecret,
-      encoding: 'base32',
-      token
-    });
-  };
 
-const  Admin   = mongoose.model('admin', administradorSchema)
+  next();
+})
+administradorSchema.methods.toJSON = function () {
+  const admin = this
+  const adminObject = admin.toObject()
+
+  delete adminObject.password
+  delete adminObject.tokens
+
+  return adminObject
+}
+// Método para generar dos factores
+administradorSchema.methods.enableTwoFactorAuth = function () {
+  const secret = speakeasy.generateSecret({ length: 20 });
+  this.twoFactorSecret = secret.base32; // Almacena solo el secreto
+  return secret;
+};
+
+// Método para generar token de autenticación
+administradorSchema.methods.generateAuthToken = async function () {
+  const admin = this;
+  const token = jwt.sign({ _id: admin._id.toString() }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  admin.tokens = admin.tokens || [];
+  admin.tokens = admin.tokens.concat({ token });
+  await admin.save(); 
+
+  return  token;
+};
+
+administradorSchema.statics.findByPasswordResetToken = async function (token) {
+  const admin = await this.findOne({ 'tokens.token': token }); // Busca por el campo 'tokens.token'
+  if (!admin) {
+    console.log('Administrador no encontrado con ese token');
+    return null;
+  }
+  return admin;
+};
+administradorSchema.statics.findByCredentials = async (email, password) => {
+  const admin = await Admin.findOne({ email });
+  if (!admin) {
+    throw new Error('Credenciales inválidas');
+  }
+
+  const isMatch = await bcrypt.compare(password, admin.password);
+  if (!isMatch) {
+    throw new Error('Credenciales inválidas');
+  }
+
+  return admin;
+};
+
+administradorSchema.methods.verifyTwoFactorToken = function (token) {
+  if (!this.twoFactorSecret) {
+    throw new Error('2FA no está habilitado para este administrador');
+  }
+
+  return speakeasy.totp.verify({
+    secret: this.twoFactorSecret,
+    encoding: 'base32',
+    token
+  });
+};
+const Admin = mongoose.model('admin', administradorSchema)
 
 module.exports = Admin;
