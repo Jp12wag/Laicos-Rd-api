@@ -99,7 +99,7 @@ controllers.loginAdministrador = async (req, res) => {
           return res.status(400).send({ error: 'Credenciales incorrectas' });
       }
 
-      console.log(administrador);
+     
       // Verifica si el usuario tiene 2FA habilitado
       if (administrador.twoFactorSecret) {
           // Aquí se debe esperar el código 2FA del cliente
@@ -108,7 +108,7 @@ controllers.loginAdministrador = async (req, res) => {
 
       // Generar token si no se requiere 2FA
       const token = await administrador.generateAuthToken();
-      console.log();
+     
       res.status(200).send({ administrador, token, twoFactorRequired: false });
 
   } catch (e) {
@@ -156,7 +156,7 @@ controllers.logoutadministrador = async (req, res) => {
 
 controllers.updateAdministrador = async (req, res) => {
   console.log("Datos recibidos para actualizar:", req.body);
-  const allowedUpdates = ['nombre', 'apellido', 'email', 'celular', 'nacimiento', 'foto']; // Campos permitidos para actualizar
+  const allowedUpdates = ['nombre', 'apellido', 'email', 'celular','sexo' ,'nacimiento', 'foto']; // Campos permitidos para actualizar
 
   const updates = Object.keys(req.body); // Claves de los datos enviados
   const filteredBody = updates.reduce((filtered, key) => {

@@ -8,5 +8,6 @@ router.get('/:id', controllers.getMiembroById);
 router.post('/', controllers.createMiembro);
 router.put('/:id', controllers.updateMiembro);
 router.delete('/:id', controllers.deleteMiembro);
+router.get('/email', controllers.getMiembroPorCorreo);
 
 module.exports = router;
