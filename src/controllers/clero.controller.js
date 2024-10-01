@@ -1,3 +1,4 @@
+
 const Clero = require('../models/clero.model');
 
 const controllers = {};
