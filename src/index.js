@@ -25,13 +25,8 @@ const corsOptions = {
 };
 
 // Conexión a la base de datos
-
-// Conexión a la base de datos
 connectDB();
 
-// Middleware
-
-// Middleware
 app.use(cors(corsOptions));
 app.use(express.json()); // Para recibir y enviar JSON
 // app.use('/api/members', memberRoutes);

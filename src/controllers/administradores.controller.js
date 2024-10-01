@@ -67,10 +67,6 @@ controllers.createAdministrador = async (req, res) => {
   }
 };
 
-
-
-
-
 controllers.getAdministradores = async (req, res) => {
   try {
     const administradores = await Administrador.find();
@@ -123,9 +119,10 @@ controllers.loginAdministrador = async (req, res) => {
 // Nuevo controlador para verificar el código 2FA
 controllers.verifyTwoFactor = async (req, res) => {
   try {
+    console.log(req.body.administradorId);
       const administrador = await Administrador.findById(req.body.administradorId); // Asegúrate de pasar el administradorId correcto
       const twoFactorCode = req.body.token; // Código 2FA ingresado por el usuario
-
+    console.log(twoFactorCode);
       const isVerified = administrador.verifyTwoFactorToken(twoFactorCode);
       console.log(isVerified);
       if (!isVerified) {
@@ -153,6 +150,24 @@ controllers.logoutadministrador = async (req, res) => {
   }
 };
 
+//cerrar toda las sessiones
+
+controllers.logoutAllAdministrador = async (req, res) => {
+  try {
+      // Vacia todos los tokens del administrador
+      console.log('Antes:', req.administrador.tokens);
+      req.administrador.tokens = [];
+      
+      // Guarda los cambios en la base de datos
+      await req.administrador.save();
+      
+      // Envía una respuesta de éxito
+      res.send({ message: 'Sesión cerrada en todos los dispositivos.' });
+  } catch (e) {
+      // Si hay un error, devuelve una respuesta con el error
+      res.status(500).send(e);
+  }
+};
 
 controllers.updateAdministrador = async (req, res) => {
   try {
