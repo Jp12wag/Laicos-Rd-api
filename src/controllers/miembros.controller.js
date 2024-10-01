@@ -92,7 +92,7 @@ controllers.updateMiembro = async (req, res) => {
     // Si el miembro no existe, crea uno nuevo
     if (!miembro) {
       miembro = new Miembro({
-        idAdministrador: adminId,
+        idAdministrador: req.admin._id,
         direccion: req.body.direccion,
         estadoCivil: req.body.estadoCivil,
         cargo: req.body.cargo,
