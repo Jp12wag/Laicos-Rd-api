@@ -23,9 +23,16 @@ const miembroSchema = new mongoose.Schema({
     required: true 
   },
   email: {
-     type: String, 
-     unique: true,
-     required: true 
+    type: String,
+    unique: true,
+    required: true,
+    trim: true,
+    lowercase: true,
+    validate(value) {
+      if (!validator.isEmail(value)) {
+        throw new Error('Email incorrecto!')
+      }
+    }
   },
   celular: { 
     type: String, 
@@ -55,6 +62,16 @@ const miembroSchema = new mongoose.Schema({
      type: String 
   }
 });
+miembroSchema.statics.consultacorreo = async (email) => {
+  const miembro = await Miembro.findOne({ email });
+  if (!miembro) {
+    throw new Error('No se encontro el miembro');
+  }
+
+
+  return miembro;
+};
+
 
 const Miembro = mongoose.model('miembro', miembroSchema);
 
