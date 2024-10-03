@@ -34,6 +34,10 @@ const administradorSchema = new mongoose.Schema({
     type: String,
     required: false
   },
+  passwordResetTokenExpires: {
+    type: Date,
+    required: false
+  },
   celular: {
     type: String,
     required: true
@@ -147,18 +151,21 @@ administradorSchema.methods.verifyTwoFactorToken = function (token) {
   });
 };
 
-administradorSchema.methods.generatePasswordResetToken = function () {
-  const resetToken = jwt.sign({ id: this._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+administradorSchema.methods.generatePasswordResetToken = async function () {
+  const admin = this;
+  const resetToken = jwt.sign({ _id: this._id.toString() }, process.env.JWT_SECRET, { expiresIn: '1h' });
   this.passwordResetToken = resetToken;
+  this.passwordResetTokenExpires = Date.now() + 3600000; // Token expira en 1 hora
   
+  await admin.save();
   return resetToken;
 };
-
 administradorSchema.statics.findByPasswordResetToken = function (token) {
-  console.log(this. passwordResetToken);
-  return this.findOne({ passwordResetToken: token });
+  return this.findOne({
+    passwordResetToken: token,
+    passwordResetTokenExpires: { $gt: Date.now() } // Verifica que no haya expirado
+  });
 };
-
 
 const Admin = mongoose.model('admin', administradorSchema)
 

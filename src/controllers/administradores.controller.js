@@ -23,16 +23,15 @@ controllers.createAdministrador = async (req, res) => {
      
       // Configuración del transportador de Nodemailer
       const transporter = nodemailer.createTransport({
-          host: 'smtp-mail.outlook.com', // Cambiado a smtp-mail.outlook.com para Hotmail
-          port: 587, // Usa el puerto 587 para conexiones TLS
-          secure: false, // Usa false para 587 (TLS)
-          auth: {
-              user: process.env.EMAIL_USER, // Tu correo de Hotmail
-              pass: process.env.EMAIL_PASS 
-          },
-          tls: {
-              rejectUnauthorized: false // Evitar problemas con certificados
-          }
+        host: process.env.HOST,
+        port:2525,
+        auth: {
+          user: process.env.EMAIL_USER, // Tu correo de Hotmail
+          pass: process.env.EMAIL_PASS 
+        },
+        
+        logger: true, // Habilita el logging
+        debug: true // Muestra información adicional sobre el proceso
       });
 
       // Opciones del correo
@@ -196,7 +195,6 @@ controllers.deleteAdministrador = async (req, res) => {
 
 controllers.requestResetPassword = async (req, res) => {
   const { email } = req.body;
- 
   try {
     const administrador = await Administrador.findOne({ email });
    
@@ -204,21 +202,19 @@ controllers.requestResetPassword = async (req, res) => {
       return res.status(404).send({ error: 'Administrador no encontrado' });
     }
     // Generar un token para el restablecimiento de contraseña (puedes usar JWT o cualquier otro mecanismo)
-    const resetToken = await administrador.generateAuthToken(); // Implementa esto en el modelo
+    const resetToken =  await administrador.generatePasswordResetToken();
     //cambiar logica de para buscar el token 
-    console.log(resetToken);
     // Configuración del transportador de Nodemailer
     const transporter = nodemailer.createTransport({
-      host: 'smtp-mail.outlook.com',
-      port: 587,
-      secure: false,
+      host: process.env.HOST,
+      port:2525,
       auth: {
         user: process.env.EMAIL_USER, // Tu correo de Hotmail
         pass: process.env.EMAIL_PASS 
       },
-      tls: {
-          rejectUnauthorized: false // Evitar problemas con certificados
-      }
+      
+      logger: true, // Habilita el logging
+      debug: true // Muestra información adicional sobre el proceso
     });
 //verificar variable globales
 
@@ -231,7 +227,13 @@ controllers.requestResetPassword = async (req, res) => {
              <a href="http://localhost:3000/reset-password/${resetToken}">Restablecer contraseña</a>`
     };
 
-    await transporter.sendMail(mailOptions);
+   
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        return console.log('Error al enviar correo:', error);
+      }
+      console.log('Correo enviado:', info.response);
+    });
 
     res.status(200).send({ message: 'Correo de restablecimiento de contraseña enviado.' });
 
@@ -247,6 +249,7 @@ controllers.resetPassword = async (req, res) => {
   try {
     // Busca al administrador por el token y verifica que sea válido
     const administrador = await Administrador.findByPasswordResetToken(token);
+    console.log(administrador);
     if (!administrador) {
       return res.status(400).send({ error: 'Token de restablecimiento inválido o expirado.' });
     }
