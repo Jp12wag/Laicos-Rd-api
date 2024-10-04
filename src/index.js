@@ -5,6 +5,7 @@ const connectDB = require('./db/conexion'); // Conexión a la base de datos
 // const memberRoutes = require('./routes/memberRoutes'); 
 const miembroRoutes = require('./routes/miembro.routes');
 const administradorRoutes = require('./routes/administradores.routes');
+const post= require('./routes/post.routes');
 //const cleroRoutes = require('./routes/clero.routes');
 //const parroquiaRoutes = require('./routes/parroquia.routes');
 //const unidadEpiscopalRoutes = require('./routes/unidadEpiscopal.routes');
@@ -32,6 +33,8 @@ app.use(express.json()); // Para recibir y enviar JSON
 // app.use('/api/members', memberRoutes);
 app.use('/api/miembros', miembroRoutes);
 app.use('/api/administradores', administradorRoutes);
+app.use('/api/post', post);
+
 //app.use('/api/clero', cleroRoutes);
 //app.use('/api/parroquias', parroquiaRoutes);
 //app.use('/api/unidades-episcopales', unidadEpiscopalRoutes);

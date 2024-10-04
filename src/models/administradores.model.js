@@ -119,8 +119,14 @@ administradorSchema.methods.enableTwoFactorAuth = function () {
 // Método para generar token de autenticación
 administradorSchema.methods.generateAuthToken = async function () {
   const admin = this;
+
   const token = jwt.sign({ _id: admin._id.toString() }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+  if (!admin.tokens) {
+    admin.tokens = []; // Inicializa tokens como un array si no está definido
+  }
   admin.tokens = admin.tokens.concat({ token });
+
   await admin.save();
   return token;
 };
@@ -156,7 +162,7 @@ administradorSchema.methods.generatePasswordResetToken = async function () {
   const resetToken = jwt.sign({ _id: this._id.toString() }, process.env.JWT_SECRET, { expiresIn: '1h' });
   this.passwordResetToken = resetToken;
   this.passwordResetTokenExpires = Date.now() + 3600000; // Token expira en 1 hora
-  
+
   await admin.save();
   return resetToken;
 };
