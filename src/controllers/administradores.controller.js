@@ -170,7 +170,6 @@ controllers.logoutAllAdministrador = async (req, res) => {
 
 controllers.updateAdministrador = async (req, res) => {
   try {
-    console.log(req.params.id, req.body);
     const administradorActualizado = await Administrador.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!administradorActualizado) {
       return res.status(404).json({ message: 'Administrador no encontrado' });

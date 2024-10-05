@@ -31,7 +31,7 @@ controllers.getMiembroById = async (req, res) => {
 // Crear un nuevo miembro
 controllers.createMiembro = async (req, res) => {
   try {
-      const adminId = req.body._id || req.admin._id; // Asegúrate de que adminId esté definido
+      const adminId = req.body._id || req.administrador._id; // Asegúrate de que adminId esté definido
 
       // Verifica si el administrador está autenticado
       if (!adminId) {
@@ -70,9 +70,11 @@ controllers.createMiembro = async (req, res) => {
 // Actualiza completamente un miembro por ID (PUT)
 controllers.updateMiembro = async (req, res) => {
   try {
-      const adminId = req.admin._id; // Obtener el ID del administrador desde el token
-      const miembro = await Miembro.findOne({ idAdministrador: adminId });
 
+      const adminId = req.administrador._id; // Obtener el ID del administrador desde el token
+     
+      const miembro = await Miembro.findOne({ idAdministrador: adminId });
+      console.log(miembro);
       if (!miembro) {
           return res.status(404).send({ message: 'Miembro no encontrado, se creará uno nuevo.' });
       }

@@ -11,7 +11,7 @@ const auth = ( async (req, res, next) => {
         if(!administrador) {
             throw Error()
         }
-
+       
         req.token = token
         req.administrador = administrador
         next();
