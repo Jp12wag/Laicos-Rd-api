@@ -31,79 +31,53 @@ controllers.getMiembroById = async (req, res) => {
 // Crear un nuevo miembro
 controllers.createMiembro = async (req, res) => {
   try {
-    // Busca al miembro en la base de datos por correo electrónico
-    const adminId = req.body._id || req.admin._id;
-    // Verifica si el administrador está autenticado
-    if (!adminId) {
-      return res.status(401).send({ message: 'No autorizado. No se encontró el administrador.' });
-    }
-    // Busca al miembro en la base de datos por idAdministrador
-    let miembro = await Miembro.findOne({ idAdministrador: adminId });
+      const adminId = req.body._id || req.admin._id; // Asegúrate de que adminId esté definido
 
-    // Si el miembro no existe, crea uno nuevo
-    if (!miembro) {
-      miembro = new Miembro({
-        idAdministrador: adminId,
-        direccion: req.body.direccion,
-        estadoCivil: req.body.estadoCivil,
-        cargo: req.body.cargo,
-        nacionalidad: req.body.nacionalidad
-      });
-
-      // Guardar el nuevo miembro
-      await miembro.save();
-      console.log('Miembro creado:', miembro);
-    } else {
-      // Si el miembro ya existe, verificamos si le faltan datos
-      console.log('Miembro ya existente:', miembro);
-
-      // Si faltan datos adicionales, devuelvo un mensaje que lo indique
-      if (!miembro.direccion || !miembro.estadoCivil || !miembro.cargo || !miembro.nacionalidad) {
-        return res.status(200).send({
-          miembro,
-          requiresAdditionalData: true,
-          message: 'El miembro ya existe, pero necesita más datos.'
-        });
+      // Verifica si el administrador está autenticado
+      if (!adminId) {
+          return res.status(401).send({ message: 'No autorizado. No se encontró el administrador.' });
       }
-    }
 
-    // Responde con el miembro creado o existente
-    res.status(200).send({ miembro });
+      // Busca al miembro en la base de datos por idAdministrador
+      let miembro = await Miembro.findOne({ idAdministrador: adminId });
+
+      // Si el miembro no existe, crea uno nuevo
+      if (!miembro) {
+          miembro = new Miembro({
+              idAdministrador: adminId,
+              direccion: req.body.direccion,
+              estadoCivil: req.body.estadoCivil,
+              cargo: req.body.cargo,
+              nacionalidad: req.body.nacionalidad
+          });
+
+          // Guardar el nuevo miembro
+          await miembro.save();
+          console.log('Miembro creado:', miembro);
+      } else {
+          // Si el miembro ya existe, devuelve su información
+          return res.status(200).send({ miembro, exists: true });
+      }
+
+      // Responde con el miembro creado
+      res.status(201).send({ miembro });
   } catch (error) {
-    console.error('Error en createMiembro:', error);
-    res.status(400).send({ message: 'Error al crear el miembro.', error });
+      console.error('Error en createMiembro:', error);
+      res.status(400).send({ message: 'Error al crear el miembro.', error });
   }
 };
 
 // Actualiza completamente un miembro por ID (PUT)
 controllers.updateMiembro = async (req, res) => {
   try {
-    console.log(req.params);
-    const adminId = req.params.id || req.admin._id; // Obtener el ID del administrador
-    console.log(adminId);
-    // Verifica si el administrador está autenticado
-    if (!adminId) {
-      return res.status(401).send({ message: 'No autorizado. No se encontró el administrador.' });
-    }
+      const adminId = req.admin._id; // Obtener el ID del administrador desde el token
+      const miembro = await Miembro.findOne({ idAdministrador: adminId });
 
-    // Busca al miembro en la base de datos por idAdministrador
-    let miembro = await Miembro.findById(adminId);
+      if (!miembro) {
+          return res.status(404).send({ message: 'Miembro no encontrado, se creará uno nuevo.' });
+      }
 
-    // Si el miembro no existe, crea uno nuevo
-    if (!miembro) {
-      miembro = new Miembro({
-        idAdministrador: req.admin._id,
-        direccion: req.body.direccion,
-        estadoCivil: req.body.estadoCivil,
-        cargo: req.body.cargo,
-        nacionalidad: req.body.nacionalidad
-      });
-
-      // Guardar el nuevo miembro
-      await miembro.save();
-      console.log('Miembro creado:', miembro);
-    } else {
-      // Si el miembro ya existe, actualiza sus datos
+      // Actualiza los campos permitidos
       miembro.direccion = req.body.direccion || miembro.direccion;
       miembro.estadoCivil = req.body.estadoCivil || miembro.estadoCivil;
       miembro.cargo = req.body.cargo || miembro.cargo;
@@ -112,13 +86,12 @@ controllers.updateMiembro = async (req, res) => {
       // Guardar los cambios
       await miembro.save();
       console.log('Miembro actualizado:', miembro);
-    }
 
-    // Responde con el miembro creado o actualizado
-    res.status(200).send({ miembro });
+      // Responde con el miembro actualizado
+      res.status(200).send({ miembro });
   } catch (error) {
-    console.error('Error en updateMiembro:', error);
-    res.status(400).send({ message: 'Error al actualizar o crear el miembro.', error });
+      console.error('Error en updateMiembro:', error);
+      res.status(400).send({ message: 'Error al actualizar el miembro.', error });
   }
 };
 
