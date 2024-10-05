@@ -1,12 +1,12 @@
+// routes/arquidiocesisRoutes.js
 const express = require('express');
-const controllers = require('../controllers/arquidiocesis.controller');
-
 const router = express.Router();
+const arquidiocesisController = require('../controllers/arquidiocesis.controller');
 
-router.get('/', controllers.getArquidiocesis);
-router.get('/:id', controllers.getArquidiocesisById);
-router.post('/', controllers.createArquidiocesis);
-router.put('/:id', controllers.updateArquidiocesis);
-router.delete('/:id', controllers.deleteArquidiocesis);
+router.get('/', arquidiocesisController.getArquidiocesis);
+router.get('/:id', arquidiocesisController.getArquidiocesisById);
+router.post('/', arquidiocesisController.createArquidiocesis);
+router.put('/:id', arquidiocesisController.updateArquidiocesis);
+router.delete('/:id', arquidiocesisController.deleteArquidiocesis);
 
 module.exports = router;

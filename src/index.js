@@ -5,6 +5,8 @@ const miembroRoutes = require('./routes/miembro.routes');
 const administradorRoutes = require('./routes/administradores.routes');
 const actividadRoutes = require('./routes/activity.routes');
 const post= require('./routes/post.routes');
+const arquidiocesis=require('./routes/arquidiocesis.routes');
+const notificacion= require('./notificaciones/notificacion');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -26,6 +28,7 @@ const corsOptions = {
 // Conexión a la base de datos
 connectDB();
 
+
 app.use(cors(corsOptions));
 app.use(express.json()); // Para recibir y enviar JSON
 // app.use('/api/members', memberRoutes);
@@ -33,6 +36,8 @@ app.use('/api/miembros', miembroRoutes);
 app.use('/api/administradores', administradorRoutes);
 app.use('/api/post', post);
 app.use('/api/', actividadRoutes);
+app.use('/api/', arquidiocesis);
+
 
 // Iniciar el servidor
 app.listen(PORT, () => {
