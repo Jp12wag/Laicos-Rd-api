@@ -3,6 +3,7 @@ const cors = require('cors');
 const connectDB = require('./db/conexion'); // Conexión a la base de datos
 const miembroRoutes = require('./routes/miembro.routes');
 const administradorRoutes = require('./routes/administradores.routes');
+const actividadRoutes = require('./routes/activity.routes');
 const post= require('./routes/post.routes');
 
 const app = express();
@@ -31,6 +32,7 @@ app.use(express.json()); // Para recibir y enviar JSON
 app.use('/api/miembros', miembroRoutes);
 app.use('/api/administradores', administradorRoutes);
 app.use('/api/post', post);
+app.use('/api/', actividadRoutes);
 
 // Iniciar el servidor
 app.listen(PORT, () => {
