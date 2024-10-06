@@ -1,18 +1,11 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-
-const diocesisSchema = new mongoose.Schema({
-  idUnidadEpiscopal: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'UnidadEpiscopal', 
-    required: true 
-  },
-  nombre: { 
-    type: String, 
-    required: true
-  }
+const DiocesisSchema = new Schema({
+    nombre: { type: String, required: true },
+    arzobispo: { type: String, required: true },
+    parroquias: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Parroquia' }]  // Relación con Parroquias
 });
 
-const Diocesis = mongoose.model('diocesis', diocesisSchema);
+module.exports = mongoose.model('Diocesis', DiocesisSchema);
 
-module.exports = Diocesis

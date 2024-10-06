@@ -28,8 +28,10 @@ controllers.getArquidiocesisById = async (req, res) => {
 // Crear nueva Arquidiócesis
 controllers.createArquidiocesis = async (req, res) => {
   const arquidiocesis = new Arquidiocesis(req.body);
+  console.log(arquidiocesis )
   try {
     const nuevaArquidiocesis = await arquidiocesis.save();
+    console.log("Nueva ar: ", nuevaArquidiocesis )
     res.status(201).json(nuevaArquidiocesis);
   } catch (err) {
     res.status(400).json({ message: err.message });

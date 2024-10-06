@@ -8,7 +8,7 @@ const miembroSchema = new mongoose.Schema({
   },
   idAdministrador: { 
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Administradores',
+    ref: 'admin',
     required:   true
   },
 

@@ -12,6 +12,9 @@ const crearPost = async (req, res) => {
     });
 
     await nuevaPublicacion.save();
+    const io = req.app.get('socketio');
+    io.emit('nuevaPublicacion', nuevaPublicacion);
+
     res.status(201).json(nuevaPublicacion);
   } catch (error) {
     res.status(500).json({ error: 'Error al crear la publicación' });

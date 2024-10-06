@@ -1,20 +1,14 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const parroquiaSchema = new mongoose.Schema({
-  idMiembro: { type: mongoose.Schema.Types.ObjectId, ref: 'Miembro' },
-  idClero: { type: mongoose.Schema.Types.ObjectId, ref: 'Clero' },
-  nombre: { type: String, required: true },
-  telefono: { type: String, required: true },
-  email: { type: String, required: true },
-  direccion: { type: String, required: true },
-  provincia: { type: String, required: true },
-  ubicacion: {
-    googleMapsLink: { type: String },
-    lat: { type: Number },
-    lon: { type: Number }
-  },
-  capacidad: { type: Number, required: true },
-  foto: { type: String }
+const ParroquiaSchema = new Schema({
+    nombre: { type: String, required: true },
+    sacerdote: { type: String, required: true },
+    diocesis: { type: mongoose.Schema.Types.ObjectId,
+         ref: 'Diocesis', 
+         required: false, 
+         default:'' },  // Relación con Diócesis
+    clero: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Clero' }]  // Relación con Clero
 });
 
-const Parroquia = mongoose.model('parroquia', parroquiaSchema)
+module.exports = mongoose.model('Parroquia', ParroquiaSchema);
