@@ -88,7 +88,7 @@ const administradorSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   }
-})
+},{ timestamps: true });
 
 administradorSchema.pre('save', async function (next) {
   const admin = this;

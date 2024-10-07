@@ -280,9 +280,11 @@ controllers.getSessions = async (req, res) => {
           return res.status(404).json({ message: 'Administrador no encontrado' });
       }
 
-      // Aquí asumo que tienes un campo en el modelo que guarda las sesiones
-      const sessions = administrador.tokens; // Cambia esto según tu modelo
-      console.log(sessions);
+      const sessions = administrador.tokens.map(token => ({
+        ...token,
+        createdAt: administrador.updatedAt // Asegúrate de que existe este campo
+    }));
+     console.log(sessions);
       res.status(200).json(sessions);
   } catch (error) {
       res.status(500).json({ message: 'Error al obtener sesiones', error });
