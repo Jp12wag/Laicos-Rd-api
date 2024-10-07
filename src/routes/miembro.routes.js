@@ -10,4 +10,5 @@ router.patch('/:id', auth,controllers.updateMiembro);
 router.delete('/:id',auth, controllers.deleteMiembro);
 router.patch('/:id', auth,controllers.actualizarMiembro);
 
+
 module.exports = router;

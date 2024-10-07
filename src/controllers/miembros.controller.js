@@ -13,12 +13,28 @@ controllers.getMiembros = async (req, res) => {
   }
 };
 
+const asignarParroquiaMiembro = async (req, res) => {
+  try {
+    const { miembroId, parroquiaId } = req.body;
+
+    const miembroActualizado = await Miembro.findByIdAndUpdate(
+      miembroId,
+      { Parroquia: parroquiaId },
+      { new: true }
+    );
+
+    res.status(200).json(miembroActualizado);
+  } catch (error) {
+    res.status(500).json({ error: 'Error asignando parroquia al miembro' });
+  }
+};
+
 // Obtener un miembro por ID
 controllers.getMiembroById = async (req, res) => {
   try {
       
     const miembro = await Miembro.findOne({idAdministrador: req.params.id});
-    console.log("Este miembro: "+miembro);
+   
     if (!miembro) {
       return res.status(404).json({ message: 'Miembro no encontrado' });
     }
@@ -48,7 +64,8 @@ controllers.createMiembro = async (req, res) => {
               direccion: req.body.direccion,
               estadoCivil: req.body.estadoCivil,
               cargo: req.body.cargo,
-              nacionalidad: req.body.nacionalidad
+              nacionalidad: req.body.nacionalidad,
+              Parroquia: req.body.Parroquia._id,
           });
 
           // Guardar el nuevo miembro
@@ -84,6 +101,7 @@ controllers.updateMiembro = async (req, res) => {
       miembro.estadoCivil = req.body.estadoCivil || miembro.estadoCivil;
       miembro.cargo = req.body.cargo || miembro.cargo;
       miembro.nacionalidad = req.body.nacionalidad || miembro.nacionalidad;
+      miembro.Parroquia = req.body.Parroquia || miembro.Parroquia;
 
       // Guardar los cambios
       await miembro.save();
@@ -113,7 +131,7 @@ controllers.deleteMiembro = async (req, res) => {
 // Actualiza parcialmente un miembro por ID (PATCH)
 controllers.actualizarMiembro = async (req, res) => {
   const updates = Object.keys(req.body);
-  const allowedUpdates = ['direccion', 'estadoCivil', 'cargo', 'nacionalidad']; // Agrega los campos permitidos
+  const allowedUpdates = ['direccion', 'estadoCivil', 'cargo', 'nacionalidad','Parroquia']; // Agrega los campos permitidos
   const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
 
   if (!isValidOperation) {

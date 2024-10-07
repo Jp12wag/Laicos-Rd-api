@@ -57,5 +57,23 @@ controllers.deleteClero = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+const Clero = require('../models/Clero');
+
+const asignarParroquiaClero = async (req, res) => {
+  try {
+    const { cleroId, parroquiaId } = req.body;
+
+    const cleroActualizado = await Clero.findByIdAndUpdate(
+      cleroId,
+      { parroquia: parroquiaId },
+      { new: true }
+    );
+
+    res.status(200).json(cleroActualizado);
+  } catch (error) {
+    res.status(500).json({ error: 'Error asignando parroquia al clero' });
+  }
+};
+
 
 module.exports = controllers;

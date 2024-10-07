@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
 const miembroSchema = new mongoose.Schema({
-  idParroquia: { 
+  Parroquia: { 
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Parroquia',
-    required: false 
+    required:false
   },
   idAdministrador: { 
     type: mongoose.Schema.Types.ObjectId,

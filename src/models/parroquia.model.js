@@ -3,12 +3,7 @@ const Schema = mongoose.Schema;
 
 const ParroquiaSchema = new Schema({
     nombre: { type: String, required: true },
-    sacerdote: { type: String, required: true },
-    diocesis: { type: mongoose.Schema.Types.ObjectId,
-         ref: 'Diocesis', 
-         required: false, 
-         default:'' },  // Relación con Diócesis
-    clero: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Clero' }]  // Relación con Clero
+    dioesis: { type: Schema.Types.ObjectId, ref: 'Diócesis', required: true }, // Referencia a la diócesis
 });
 
 module.exports = mongoose.model('Parroquia', ParroquiaSchema);
