@@ -88,6 +88,7 @@ controllers.getAdministradorById = async (req, res) => {
 
 controllers.loginAdministrador = async (req, res) => {
   try {
+     
     const administrador = await Administrador.findByCredentials(req.body.email, req.body.password);
 
     if (!administrador) {
@@ -101,7 +102,8 @@ controllers.loginAdministrador = async (req, res) => {
     }
 
     // Generar token si no se requiere 2FA
-    const token = await administrador.generateAuthToken();
+    const userAgent = req.headers['user-agent'];
+    const token = await administrador.generateAuthToken(userAgent);
     res.status(200).send({ administrador, token, twoFactorRequired: false });
 
   } catch (e) {
@@ -117,7 +119,7 @@ controllers.loginAdministrador = async (req, res) => {
 // Nuevo controlador para verificar el código 2FA
 controllers.verifyTwoFactor = async (req, res) => {
   try {
-    console.log(req.body.administradorId);
+   
     const administrador = await Administrador.findById(req.body.administradorId); // Asegúrate de pasar el administradorId correcto
     const twoFactorCode = req.body.token; // Código 2FA ingresado por el usuario
     console.log(twoFactorCode);
@@ -127,8 +129,9 @@ controllers.verifyTwoFactor = async (req, res) => {
       return res.status(401).send({ error: 'Código 2FA inválido' });
     }
 
-    // Generar token después de verificar el 2FA
-    const token = await administrador.generateAuthToken();
+    const userAgent = req.headers['user-agent'];
+    const token = await administrador.generateAuthToken(userAgent);
+
     res.status(200).send({ administrador, token });
 
   } catch (e) {
@@ -264,5 +267,27 @@ controllers.resetPassword = async (req, res) => {
     res.status(500).send({ error: 'Ocurrió un error al restablecer la contraseña.' });
   }
 };
+
+controllers.getSessions = async (req, res) => {
+  try {
+  
+      const adminId = req.params.id; // Asegúrate de que la ID del administrador esté disponible
+     
+      const administrador = await Administrador.findById(adminId);
+ 
+
+      if (!administrador) {
+          return res.status(404).json({ message: 'Administrador no encontrado' });
+      }
+
+      // Aquí asumo que tienes un campo en el modelo que guarda las sesiones
+      const sessions = administrador.tokens; // Cambia esto según tu modelo
+      console.log(sessions);
+      res.status(200).json(sessions);
+  } catch (error) {
+      res.status(500).json({ message: 'Error al obtener sesiones', error });
+  }
+};
+
 
 module.exports = controllers;

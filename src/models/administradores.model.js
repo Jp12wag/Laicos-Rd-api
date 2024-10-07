@@ -70,6 +70,10 @@ const administradorSchema = new mongoose.Schema({
     token: {
       type: String,
       required: true
+    },
+    userAgent:{
+      type: String, // Define que será una cadena que almacena información del dispositivo/navegador
+      required: true
     }
   }],
   twoFactorSecret: {
@@ -117,7 +121,7 @@ administradorSchema.methods.enableTwoFactorAuth = function () {
 };
 
 // Método para generar token de autenticación
-administradorSchema.methods.generateAuthToken = async function () {
+administradorSchema.methods.generateAuthToken = async function (userAgent) {
   const admin = this;
 
   const token = jwt.sign({ _id: admin._id.toString() }, process.env.JWT_SECRET, { expiresIn: '6h' });
@@ -125,7 +129,7 @@ administradorSchema.methods.generateAuthToken = async function () {
   if (!admin.tokens) {
     admin.tokens = []; // Inicializa tokens como un array si no está definido
   }
-  admin.tokens = admin.tokens.concat({ token });
+  admin.tokens = admin.tokens.concat({ token, userAgent });
 
   await admin.save();
   return token;

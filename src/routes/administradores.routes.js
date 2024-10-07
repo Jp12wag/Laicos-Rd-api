@@ -14,5 +14,6 @@ router.patch('/:id', auth, controllers.updateAdministrador);
 router.delete('/:id',auth, controllers.deleteAdministrador);
 router.post('/request-reset-password', controllers.requestResetPassword);
 router.post('/reset-password/:token', controllers.resetPassword);
+router.get('/:id/sessions', auth, controllers.getSessions);
 
 module.exports = router;
