@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const speakeasy = require('speakeasy'); // Para 2FA
 const mongoose = require('mongoose')
+
+
 const administradorSchema = new mongoose.Schema({
   nombre: {
     type: String,
@@ -27,6 +29,14 @@ const administradorSchema = new mongoose.Schema({
         throw new Error('Email incorrecto!')
       }
     }
+  },
+  passwordResetToken: {
+    type: String,
+    required: false
+  },
+  passwordResetTokenExpires: {
+    type: Date,
+    required: false
   },
   celular: {
     type: String,
@@ -60,6 +70,10 @@ const administradorSchema = new mongoose.Schema({
     token: {
       type: String,
       required: true
+    },
+    userAgent:{
+      type: String, // Define que será una cadena que almacena información del dispositivo/navegador
+      required: true
     }
   }],
   twoFactorSecret: {
@@ -74,7 +88,8 @@ const administradorSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   }
-})
+},{ timestamps: true });
+
 administradorSchema.pre('save', async function (next) {
   const admin = this;
 
@@ -87,7 +102,8 @@ administradorSchema.pre('save', async function (next) {
   }
 
   next();
-})
+});
+
 administradorSchema.methods.toJSON = function () {
   const admin = this
   const adminObject = admin.toObject()
@@ -105,24 +121,20 @@ administradorSchema.methods.enableTwoFactorAuth = function () {
 };
 
 // Método para generar token de autenticación
-administradorSchema.methods.generateAuthToken = async function () {
+administradorSchema.methods.generateAuthToken = async function (userAgent) {
   const admin = this;
-  const token = jwt.sign({ _id: admin._id.toString() }, process.env.JWT_SECRET, { expiresIn: '1h' });
-  admin.tokens = admin.tokens || [];
-  admin.tokens = admin.tokens.concat({ token });
-  await admin.save(); 
 
-  return  token;
-};
+  const token = jwt.sign({ _id: admin._id.toString() }, process.env.JWT_SECRET, { expiresIn: '6h' });
 
-administradorSchema.statics.findByPasswordResetToken = async function (token) {
-  const admin = await this.findOne({ 'tokens.token': token }); // Busca por el campo 'tokens.token'
-  if (!admin) {
-    console.log('Administrador no encontrado con ese token');
-    return null;
+  if (!admin.tokens) {
+    admin.tokens = []; // Inicializa tokens como un array si no está definido
   }
-  return admin;
+  admin.tokens = admin.tokens.concat({ token, userAgent });
+
+  await admin.save();
+  return token;
 };
+
 administradorSchema.statics.findByCredentials = async (email, password) => {
   const admin = await Admin.findOne({ email });
   if (!admin) {
@@ -148,6 +160,23 @@ administradorSchema.methods.verifyTwoFactorToken = function (token) {
     token
   });
 };
+
+administradorSchema.methods.generatePasswordResetToken = async function () {
+  const admin = this;
+  const resetToken = jwt.sign({ _id: this._id.toString() }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  this.passwordResetToken = resetToken;
+  this.passwordResetTokenExpires = Date.now() + 3600000; // Token expira en 1 hora
+
+  await admin.save();
+  return resetToken;
+};
+administradorSchema.statics.findByPasswordResetToken = function (token) {
+  return this.findOne({
+    passwordResetToken: token,
+    passwordResetTokenExpires: { $gt: Date.now() } // Verifica que no haya expirado
+  });
+};
+
 const Admin = mongoose.model('admin', administradorSchema)
 
 module.exports = Admin;

@@ -1,18 +1,11 @@
 const mongoose = require('mongoose')
 
 
-const arquidiocesisSchema = new mongoose.Schema({
-  idDiocesis: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Diocesis', 
-    required: true 
-  },
-  nombre: { 
-    type: String, 
-    required: true 
-  }
+const ArchdioceseSchema = new mongoose.Schema({
+  nombre: { type: String, required: true },
+  arzobispo: { type: String, required: true },
+  diocesis: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Diocesis' }]
 });
-
-const Arquidocesis = mongoose.model('arquidocesis', arquidiocesisSchema)
+const Arquidocesis = mongoose.model('arquidocesis', ArchdioceseSchema)
 
  module.exports = Arquidocesis

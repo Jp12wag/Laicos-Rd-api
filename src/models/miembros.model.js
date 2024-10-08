@@ -1,37 +1,19 @@
 const mongoose = require('mongoose');
 
 const miembroSchema = new mongoose.Schema({
-  idParroquia: { 
+  Parroquia: { 
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Parroquia',
-    required: false 
+    required:false
   },
-  nombre: { 
-    type: String, 
-    required: true 
+  idAdministrador: { 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'admin',
+    required:   true
   },
-  apellido: {
-     type: String, 
-     required: true 
-  },
-  sexo: { 
-    type: String, 
-    required: true 
-  },
+
   estadoCivil: { 
     type: String, 
-    required: true 
-  },
-  email: {
-     type: String, 
-     required: true 
-  },
-  celular: { 
-    type: String, 
-    required: true 
-  },
-  fechaNacimiento: { 
-    type: Date, 
     required: true 
   },
   direccion: { 
@@ -45,13 +27,6 @@ const miembroSchema = new mongoose.Schema({
   nacionalidad: { 
     type: String, 
     required: true 
-  },
-  esLaico: {
-     type: Boolean, 
-     default: false 
-  },
-  foto: {
-     type: String 
   }
 });
 

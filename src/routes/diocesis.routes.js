@@ -1,12 +1,13 @@
 const express = require('express');
-const controllers = require('../controllers/diocesis.controller');
+const router = express.Router();
+const auth = require('../middleware/auth')
+const diocesisController = require('../controllers/diocesis.controller');
 
-const router = new express.Router();
 
-router.get('/', controllers.getDiocesis);
-router.get('/:id', controllers.getDiocesisById);
-router.post('/', controllers.createDiocesis);
-router.put('/:id', controllers.updateDiocesis);
-router.delete('/:id', controllers.deleteDiocesis);
+router.post('/',auth, diocesisController.createDiocesis);
+router.get('/',auth, diocesisController.getAllDiocesis);
+router.get('/:id', auth,diocesisController.getDiocesisById);
+router.put('/:id', auth,diocesisController.updateDiocesis);
+router.delete('/:id', auth,diocesisController.deleteDiocesis);
 
 module.exports = router;

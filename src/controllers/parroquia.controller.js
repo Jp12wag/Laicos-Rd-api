@@ -1,68 +1,76 @@
 const Parroquia = require('../models/parroquia.model');
-const controllers = {};
+const controladoresParroquia = {};
 
-
-controllers.getParroquias = async (req, res) => {
-  try {
-    const parroquias = await Parroquia.find();
-    res.status(200).json(parroquias);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-
-controllers.getParroquiaById = async (req, res) => {
-  try {
-    const parroquia = await Parroquia.findById(req.params.id);
-    if (!parroquia) {
-      return res.status(404).json({ message: 'Parroquia no encontrada' });
+// Obtener todas las parroquias
+controladoresParroquia.getParroquias = async (req, res) => {
+    try {
+        const parroquias = await Parroquia.find().populate('dioesis'); // Población para obtener datos de diócesis
+        res.status(200).json(parroquias);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
-    res.status(200).json(parroquia);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
 };
 
+// Crear nueva parroquia
+controladoresParroquia.createParroquia = async (req, res) => {
+    const { nombre, dioesis } = req.body;
 
-controllers.createParroquia = async (req, res) => {
-  const parroquia = new Parroquia(req.body);
-  try {
-    const nuevaParroquia = await parroquia.save();
-    res.status(201).json(nuevaParroquia);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-};
+    const parroquia = new Parroquia({ nombre, dioesis });
 
-
-controllers.updateParroquia = async (req, res) => {
-  try {
-    const parroquiaActualizada = await Parroquia.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    if (!parroquiaActualizada) {
-      return res.status(404).json({ message: 'Parroquia no encontrada' });
+    try {
+        const nuevaParroquia = await parroquia.save();
+        res.status(201).json(nuevaParroquia);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
     }
-    res.status(200).json(parroquiaActualizada);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
 };
-
-
-controllers.deleteParroquia = async (req, res) => {
+controladoresParroquia.getParroquiasByDiocesis = async (req, res) => {
   try {
-    const parroquia = await Parroquia.findByIdAndDelete(req.params.id);
-    if (!parroquia) {
-      return res.status(404).json({ message: 'Parroquia no encontrada' });
-    }
-    res.status(200).json({ message: 'Parroquia eliminada' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+      const { diocesis } = req.query;
+      const parroquias = await Parroquia.find({ diocesis }); // Filtra por la diócesis seleccionada
+      res.status(200).json(parroquias);
+  } catch (error) {
+      res.status(500).json({ message: 'Error al obtener las parroquias' });
   }
 };
 
-module.exports = controllers;
+// Obtener una parroquia por ID
+controladoresParroquia.getParroquiaById = async (req, res) => {
+    try {
+        const parroquia = await Parroquia.findById(req.params.id).populate('dioesis');
+        if (!parroquia) {
+            return res.status(404).json({ message: 'Parroquia no encontrada' });
+        }
+        res.status(200).json(parroquia);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// Actualizar Parroquia
+controladoresParroquia.updateParroquia = async (req, res) => {
+    try {
+        const parroquiaActualizada = await Parroquia.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!parroquiaActualizada) {
+            return res.status(404).json({ message: 'Parroquia no encontrada' });
+        }
+        res.status(200).json(parroquiaActualizada);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+};
+
+// Eliminar Parroquia
+controladoresParroquia.deleteParroquia = async (req, res) => {
+    try {
+        const parroquia = await Parroquia.findByIdAndDelete(req.params.id);
+        if (!parroquia) {
+            return res.status(404).json({ message: 'Parroquia no encontrada' });
+        }
+        res.status(200).json({ message: 'Parroquia eliminada' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+module.exports = controladoresParroquia;

@@ -1,68 +1,68 @@
-const Diocesis = require('../models/diocesis.model');
-const controllers = {};
+const Diócesis = require('../models/diocesis.model');
 
-
-controllers.getDiocesis = async (req, res) => {
-  try {
-    const diocesis = await Diocesis.find();
-    res.status(200).json(diocesis);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-
-controllers.getDiocesisById = async (req, res) => {
-  try {
-    const diocesis = await Diocesis.findById(req.params.id);
-    if (!diocesis) {
-      return res.status(404).json({ message: 'Diócesis no encontrada' });
+// Crear una nueva diócesis
+exports.createDiocesis = async (req, res) => {
+    try {
+        const { nombre, parroquias } = req.body;
+        const nuevaDiocesis = new Diócesis({ nombre, parroquias });
+        await nuevaDiocesis.save();
+        res.status(201).json(nuevaDiocesis);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error al crear la diócesis' });
     }
-    res.status(200).json(diocesis);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
 };
 
-
-controllers.createDiocesis = async (req, res) => {
-  const diocesis = new Diocesis(req.body);
-  try {
-    const nuevaDiocesis = await diocesis.save();
-    res.status(201).json(nuevaDiocesis);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-};
-
-
-controllers.updateDiocesis = async (req, res) => {
-  try {
-    const diocesisActualizada = await Diocesis.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    if (!diocesisActualizada) {
-      return res.status(404).json({ message: 'Diócesis no encontrada' });
+// Obtener todas las diócesis
+exports.getAllDiocesis = async (req, res) => {
+    try {
+        const diocesis = await Diócesis.find().populate('parroquias');
+        res.json(diocesis);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error al obtener las diócesis' });
     }
-    res.status(200).json(diocesisActualizada);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
 };
 
-
-controllers.deleteDiocesis = async (req, res) => {
-  try {
-    const diocesis = await Diocesis.findByIdAndDelete(req.params.id);
-    if (!diocesis) {
-      return res.status(404).json({ message: 'Diócesis no encontrada' });
+// Obtener una diócesis por ID
+exports.getDiocesisById = async (req, res) => {
+    try {
+        const diocesis = await Diócesis.findById(req.params.id).populate('parroquias');
+        if (!diocesis) {
+            return res.status(404).json({ message: 'Diócesis no encontrada' });
+        }
+        res.json(diocesis);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error al obtener la diócesis' });
     }
-    res.status(200).json({ message: 'Diócesis eliminada' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
 };
 
-module.exports = controllers;
+// Actualizar una diócesis
+exports.updateDiocesis = async (req, res) => {
+    try {
+        const { nombre, parroquias } = req.body;
+        const diocesis = await Diócesis.findByIdAndUpdate(req.params.id, { nombre, parroquias }, { new: true });
+        if (!diocesis) {
+            return res.status(404).json({ message: 'Diócesis no encontrada' });
+        }
+        res.json(diocesis);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error al actualizar la diócesis' });
+    }
+};
+
+// Eliminar una diócesis
+exports.deleteDiocesis = async (req, res) => {
+    try {
+        const diocesis = await Diócesis.findByIdAndDelete(req.params.id);
+        if (!diocesis) {
+            return res.status(404).json({ message: 'Diócesis no encontrada' });
+        }
+        res.json({ message: 'Diócesis eliminada' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error al eliminar la diócesis' });
+    }
+};

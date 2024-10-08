@@ -49,4 +49,5 @@ const obispoSchema = new mongoose.Schema({
 
 const Obispo = mongoose.model('obispo', obispoSchema)
 
+
 module.exports = Obispo

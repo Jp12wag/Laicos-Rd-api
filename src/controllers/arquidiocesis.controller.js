@@ -2,6 +2,7 @@ const Arquidiocesis = require('../models/arquidiocesis.model');
 
 const controllers = {};
 
+// Obtener todas las Arquidiócesis
 controllers.getArquidiocesis = async (req, res) => {
   try {
     const arquidiocesis = await Arquidiocesis.find();
@@ -11,6 +12,7 @@ controllers.getArquidiocesis = async (req, res) => {
   }
 };
 
+// Obtener Arquidiócesis por ID
 controllers.getArquidiocesisById = async (req, res) => {
   try {
     const arquidiocesis = await Arquidiocesis.findById(req.params.id);
@@ -23,16 +25,20 @@ controllers.getArquidiocesisById = async (req, res) => {
   }
 };
 
+// Crear nueva Arquidiócesis
 controllers.createArquidiocesis = async (req, res) => {
   const arquidiocesis = new Arquidiocesis(req.body);
+  console.log(arquidiocesis )
   try {
     const nuevaArquidiocesis = await arquidiocesis.save();
+    console.log("Nueva ar: ", nuevaArquidiocesis )
     res.status(201).json(nuevaArquidiocesis);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
 
+// Actualizar Arquidiócesis
 controllers.updateArquidiocesis = async (req, res) => {
   try {
     const arquidiocesisActualizada = await Arquidiocesis.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -45,6 +51,7 @@ controllers.updateArquidiocesis = async (req, res) => {
   }
 };
 
+// Eliminar Arquidiócesis
 controllers.deleteArquidiocesis = async (req, res) => {
   try {
     const arquidiocesis = await Arquidiocesis.findByIdAndDelete(req.params.id);

@@ -14,4 +14,5 @@ const unidadEpiscopalSchema = new mongoose.Schema({
 
 const UnidadEpiscopal = mongoose.model('unidadEpiscopal', unidadEpiscopalSchema)
 
+
 module.exports = UnidadEpiscopal
