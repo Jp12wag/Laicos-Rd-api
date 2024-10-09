@@ -71,5 +71,5 @@ const enviarRecordatorios = async () => {
 };
 
 // Programar la tarea para que se ejecute cada día a las 8 AM
-cron.schedule('44 9 * * *', enviarRecordatorios);
+cron.schedule('33 19 * * *', enviarRecordatorios);
 

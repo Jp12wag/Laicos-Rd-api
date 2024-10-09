@@ -55,6 +55,7 @@ app.set('socketio', io);
 // Escuchar eventos de conexión de Socket.IO
 io.on('connection', (socket) => {
     console.log('Nuevo cliente conectado', socket.id);
+    
 
     // Ejemplo: Manejar la desconexión de un cliente
     socket.on('disconnect', () => {
