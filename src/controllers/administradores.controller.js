@@ -3,22 +3,14 @@ const Administrador = require('../models/administradores.model');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 const nodemailer = require('nodemailer');
-
 const controllers = {};
 
 controllers.createAdministrador = async (req, res) => {
-
   try {
     const administrador = new Administrador(req.body);
-    const passSinAuth = administrador.password;
-    const secret = speakeasy.generateSecret();
-
-    administrador.twoFactorSecret = secret.base32;
-
+    
+    // Guarda el nuevo administrador
     await administrador.save();
-
-    const otpauthUrl = secret.otpauth_url;
-    const qrCodeDataUrl = await qrcode.toDataURL(otpauthUrl);
 
     // Configuración del transportador de Nodemailer
     const transporter = nodemailer.createTransport({
@@ -26,9 +18,8 @@ controllers.createAdministrador = async (req, res) => {
       port: 2525,
       auth: {
         user: process.env.EMAIL_USER, // Tu correo de Hotmail
-        pass: process.env.EMAIL_PASS
+        pass: process.env.EMAIL_PASS // La contraseña de tu correo
       },
-
       logger: true, // Habilita el logging
       debug: true // Muestra información adicional sobre el proceso
     });
@@ -37,14 +28,13 @@ controllers.createAdministrador = async (req, res) => {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: administrador.email, // El correo del usuario registrado
-      subject: 'Código QR y 2FA para tu cuenta',
+      subject: 'Registro exitoso',
       html: `
               <p>Hola ${administrador.nombre},</p>
-              <p>Gracias por registrarte. Aquí tienes tu código de autenticación en dos pasos y tu código QR:</p>
-               <p><strong>su email: ${administrador.email} password: ${passSinAuth} </strong></p>
-              <p><strong>Código 2FA: ${secret.base32}</strong></p>
-              <p>Escanea el siguiente código QR con tu aplicación de autenticación:</p>
-              <p><img src=${qrCodeDataUrl} alt="Código QR de 2FA" /></p>
+              <p>Gracias por registrarte  en nuestra plataforma.</p>
+              <p>Tu cuenta ha sido creada exitosamente. Puedes iniciar sesión utilizando tus credenciales.</p>
+              <p>Saludos,</p>
+              <p>El equipo de la </p>
           `
     };
 
@@ -55,15 +45,16 @@ controllers.createAdministrador = async (req, res) => {
         return res.status(500).send({ message: 'Error al enviar el correo.' });
       }
       console.log('Correo enviado: ' + info.response);
-
-      // Responder después de que el correo se haya enviado
-      return res.status(201).send({ administrador, qrcode: qrCodeDataUrl });
+      
+      // Responder con el administrador creado
+      return res.status(201).send({ administrador });
     });
 
   } catch (e) {
     res.status(400).send(e);
   }
 };
+
 
 controllers.getAdministradores = async (req, res) => {
   try {
