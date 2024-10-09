@@ -80,6 +80,11 @@ const administradorSchema = new mongoose.Schema({
     type: String,
     required: false // Este campo se utilizará para almacenar el secreto de 2FA
   },
+  isTwoFaEnabled: {
+    type: Boolean,
+    default:false,
+    required: false // Este campo se utilizará para almacenar el secreto de 2FA
+  },
   fechaRegistro: {
     type: Date,
     default: Date.now

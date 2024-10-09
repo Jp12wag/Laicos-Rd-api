@@ -3,22 +3,14 @@ const Administrador = require('../models/administradores.model');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 const nodemailer = require('nodemailer');
-
 const controllers = {};
 
 controllers.createAdministrador = async (req, res) => {
-
   try {
     const administrador = new Administrador(req.body);
-    const passSinAuth = administrador.password;
-    const secret = speakeasy.generateSecret();
-
-    administrador.twoFactorSecret = secret.base32;
-
+    
+    // Guarda el nuevo administrador
     await administrador.save();
-
-    const otpauthUrl = secret.otpauth_url;
-    const qrCodeDataUrl = await qrcode.toDataURL(otpauthUrl);
 
     // Configuración del transportador de Nodemailer
     const transporter = nodemailer.createTransport({
@@ -26,9 +18,8 @@ controllers.createAdministrador = async (req, res) => {
       port: 2525,
       auth: {
         user: process.env.EMAIL_USER, // Tu correo de Hotmail
-        pass: process.env.EMAIL_PASS
+        pass: process.env.EMAIL_PASS // La contraseña de tu correo
       },
-
       logger: true, // Habilita el logging
       debug: true // Muestra información adicional sobre el proceso
     });
@@ -37,14 +28,13 @@ controllers.createAdministrador = async (req, res) => {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: administrador.email, // El correo del usuario registrado
-      subject: 'Código QR y 2FA para tu cuenta',
+      subject: 'Registro exitoso',
       html: `
               <p>Hola ${administrador.nombre},</p>
-              <p>Gracias por registrarte. Aquí tienes tu código de autenticación en dos pasos y tu código QR:</p>
-               <p><strong>su email: ${administrador.email} password: ${passSinAuth} </strong></p>
-              <p><strong>Código 2FA: ${secret.base32}</strong></p>
-              <p>Escanea el siguiente código QR con tu aplicación de autenticación:</p>
-              <p><img src=${qrCodeDataUrl} alt="Código QR de 2FA" /></p>
+              <p>Gracias por registrarte  en nuestra plataforma.</p>
+              <p>Tu cuenta ha sido creada exitosamente. Puedes iniciar sesión utilizando tus credenciales.</p>
+              <p>Saludos,</p>
+              <p>El equipo de la </p>
           `
     };
 
@@ -55,15 +45,16 @@ controllers.createAdministrador = async (req, res) => {
         return res.status(500).send({ message: 'Error al enviar el correo.' });
       }
       console.log('Correo enviado: ' + info.response);
-
-      // Responder después de que el correo se haya enviado
-      return res.status(201).send({ administrador, qrcode: qrCodeDataUrl });
+      
+      // Responder con el administrador creado
+      return res.status(201).send({ administrador });
     });
 
   } catch (e) {
     res.status(400).send(e);
   }
 };
+
 
 controllers.getAdministradores = async (req, res) => {
   try {
@@ -88,19 +79,24 @@ controllers.getAdministradorById = async (req, res) => {
 
 controllers.loginAdministrador = async (req, res) => {
   try {
-     
+
     const administrador = await Administrador.findByCredentials(req.body.email, req.body.password);
 
     if (!administrador) {
       return res.status(400).send({ error: 'Credenciales incorrectas' });
     }
 
-    // Verifica si el usuario tiene 2FA habilitado
+  /*   // Verifica si el usuario tiene 2FA habilitado
     if (administrador.twoFactorSecret) {
       // Aquí se debe esperar el código 2FA del cliente
       return res.status(200).send({ twoFactorRequired: true, administrador }); // Indica que se requiere 2FA
-    }
+    }*/
 
+     // Si el administrador tiene 2FA habilitado
+     if (administrador.isTwoFaEnabled && administrador.twoFactorSecret) {
+      // Enviar respuesta indicando que se requiere 2FA
+      return res.status(200).send({ twoFactorRequired: true, message: 'Se requiere 2FA. Por favor, ingresa tu código de autenticación.', administradorId: administrador._id });
+    }
     // Generar token si no se requiere 2FA
     const userAgent = req.headers['user-agent'];
     const token = await administrador.generateAuthToken(userAgent);
@@ -119,12 +115,12 @@ controllers.loginAdministrador = async (req, res) => {
 // Nuevo controlador para verificar el código 2FA
 controllers.verifyTwoFactor = async (req, res) => {
   try {
-   
+
     const administrador = await Administrador.findById(req.body.administradorId); // Asegúrate de pasar el administradorId correcto
     const twoFactorCode = req.body.token; // Código 2FA ingresado por el usuario
-    console.log(twoFactorCode);
+   console.log(twoFactorCode)
     const isVerified = administrador.verifyTwoFactorToken(twoFactorCode);
-    console.log(isVerified);
+    console.log(isVerified)
     if (!isVerified) {
       return res.status(401).send({ error: 'Código 2FA inválido' });
     }
@@ -191,6 +187,74 @@ controllers.deleteAdministrador = async (req, res) => {
     res.status(200).json({ message: 'Administrador eliminado' });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+controllers.verificarToken = async (req, res) => {
+  try {
+    
+    const { isTwoFaEnabled, } = req.body; // Asegúrate de recibir también el ID del usuario
+    const userId = req.administrador._id; 
+   
+    // Encontrar al administrador por su ID
+    const administrador = await Administrador.findById(userId);
+
+    if (!administrador) {
+      return res.status(404).json({ message: 'Administrador no encontrado' });
+    }
+    const secret = speakeasy.generateSecret({ length: 20 });  
+    // Si se habilita 2FA, generar una clave secreta
+    if (isTwoFaEnabled && !administrador.twoFactorSecret) {
+      administrador.twoFactorSecret = secret.base32; // Guardar la nueva clave 2FA
+    } else if (!isTwoFaEnabled) {
+      // Si se desactiva 2FA, limpiar la clave secreta
+      administrador.twoFactorSecret = null; 
+    }
+
+    // Actualizar la configuración de 2FA
+    administrador.isTwoFaEnabled = isTwoFaEnabled;
+
+    // Guardar los cambios en la base de datos
+    await administrador.save();
+
+    // Si se habilitó 2FA, enviar el QR al correo del administrador
+    if (isTwoFaEnabled) {
+      const otpauthUrl = secret.otpauth_url;
+      const qrCodeDataUrl = await qrcode.toDataURL(otpauthUrl);
+
+      // Configuración del transportador de Nodemailer
+      const transporter = nodemailer.createTransport({
+        host: process.env.HOST,
+        port: 2525,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
+        },
+        logger: true,
+        debug: true
+      });
+
+      // Opciones del correo
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: administrador.email,
+        subject: 'Código QR y 2FA para tu cuenta',
+        html: `
+          <p>Hola ${administrador.nombre},</p>
+          <p>Codigo en dos Factores ${administrador.twoFactorSecret},</p>
+          <p>Tu autenticación en dos pasos ha sido habilitada. Escanea el siguiente código QR:</p>
+          <p><img src=${qrCodeDataUrl} alt="Código QR de 2FA" /></p>
+        `
+      };
+
+      // Enviar el correo electrónico
+      await transporter.sendMail(mailOptions);
+    }
+
+    // Responder con éxito
+    res.status(200).json({ message: 'Configuración de seguridad actualizada correctamente' });
+  } catch (error) {
+    console.error('Error al actualizar la configuración de seguridad:', error);
+    res.status(500).json({ message: 'Error al actualizar la configuración de seguridad' });
   }
 };
 
@@ -270,24 +334,24 @@ controllers.resetPassword = async (req, res) => {
 
 controllers.getSessions = async (req, res) => {
   try {
-  
-      const adminId = req.params.id; // Asegúrate de que la ID del administrador esté disponible
-     
-      const administrador = await Administrador.findById(adminId);
- 
 
-      if (!administrador) {
-          return res.status(404).json({ message: 'Administrador no encontrado' });
-      }
+    const adminId = req.params.id; // Asegúrate de que la ID del administrador esté disponible
 
-      const sessions = administrador.tokens.map(token => ({
-        ...token,
-        createdAt: administrador.updatedAt // Asegúrate de que existe este campo
+    const administrador = await Administrador.findById(adminId);
+
+
+    if (!administrador) {
+      return res.status(404).json({ message: 'Administrador no encontrado' });
+    }
+
+    const sessions = administrador.tokens.map(token => ({
+      ...token,
+      createdAt: administrador.updatedAt // Asegúrate de que existe este campo
     }));
-     console.log(sessions);
-      res.status(200).json(sessions);
+    console.log(sessions);
+    res.status(200).json(sessions);
   } catch (error) {
-      res.status(500).json({ message: 'Error al obtener sesiones', error });
+    res.status(500).json({ message: 'Error al obtener sesiones', error });
   }
 };
 
