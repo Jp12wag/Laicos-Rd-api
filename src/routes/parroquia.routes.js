@@ -9,5 +9,6 @@ router.post('/', controllers.createParroquia);
 router.put('/:id', controllers.updateParroquia);
 router.delete('/:id', controllers.deleteParroquia);
 router.get('/diocesis/:id/parroquias', controllers.getParroquiasByDiocesis);
+router.get('/:id',controllers.getParroquiaIdBy)
 
 module.exports = router;
