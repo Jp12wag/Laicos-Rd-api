@@ -129,7 +129,7 @@ administradorSchema.methods.enableTwoFactorAuth = function () {
 administradorSchema.methods.generateAuthToken = async function (userAgent) {
   const admin = this;
 
-  const token = jwt.sign({ _id: admin._id.toString() }, process.env.JWT_SECRET, { expiresIn: '6h' });
+  const token = jwt.sign({ _id: admin._id.toString() }, process.env.JWT_SECRET);
 
   if (!admin.tokens) {
     admin.tokens = []; // Inicializa tokens como un array si no está definido
