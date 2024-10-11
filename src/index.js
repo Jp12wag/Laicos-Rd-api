@@ -19,8 +19,6 @@ const arquidiocesisRoutes = require('./routes/arquidiocesis.routes');
 const diocesisRoutes = require('./routes/diocesis.routes');
 const parroquiaRoutes = require('./routes/parroquia.routes');
 const routesMensaje = require('./routes/mensaje.routes');
-const Notificacion = require('./notificaciones/notificacion');
-
 
 const app = express();
 const server = http.createServer(app);
@@ -85,63 +83,65 @@ io.use(async (socket, next) => {
 let usuariosConectados = {};
 
 io.on('connection', (socket) => {
-  const userId = socket.userId;
+  const userId = socket.userInfo._id;
 
   if (!userId) return;
-
-  console.log('Nuevo cliente conectado', socket.id, 'usuario:', socket.userInfo.nombre);
+  socket.join(userId);
 
   // Agregar el usuario a la lista de conectados
   usuariosConectados[userId] = { socketId: socket.id, userInfo: socket.userInfo };
+  console.log(usuariosConectados);
 
-  // Emitir lista actualizada a todos los clientes, excluyendo al usuario logueado
-  io.emit('actualizarUsuariosConectados', Object.values(usuariosConectados));
+  // Emitir lista actualizada al usuario actual (sin incluir al propio usuario)
+  socket.emit('actualizarUsuariosConectados', Object.values(usuariosConectados).filter(u => u.userInfo._id !== userId));
 
   // Cargar historial de chat cuando el usuario se conecta
-socket.on('cargarHistorial', async ({ receptorId }) => {
-  try {
-    const historial = await Mensaje.find({
-      $or: [
-        { emisor: userId, receptor: receptorId },
-        { emisor: receptorId, receptor: userId },
-      ],
-    }).sort({ fechaEnvio: 1 });
+  socket.on('cargarHistorial', async ({ receptorId }) => {
+    try {
+      const historial = await Mensaje.find({
+        $or: [
+          { emisor: userId, receptor: receptorId },
+          { emisor: receptorId, receptor: userId },
+        ],
+      }).sort({ fechaEnvio: 1 });
 
-    // Emitir el historial al cliente que solicitó
-    socket.emit('historialMensajes', historial);
-  } catch (error) {
-    console.error('Error al cargar el historial:', error);
-  }
-});
+      socket.emit('historialMensajes', historial);
+    } catch (error) {
+      console.error('Error al cargar el historial:', error);
+    }
+  });
 
-// Enviar un mensaje
-socket.on('enviarMensaje', async ({ receptorId, mensaje }) => {
-  try {
-    const nuevoMensaje = new Mensaje({
-      emisor: userId,
-      receptor: receptorId,
-      mensaje,
-      fechaEnvio: new Date(),
-    });
+  // Enviar un mensaje
+  socket.on('enviarMensaje', async ({ receptorId, mensaje }) => {
+    try {
+      const nuevoMensaje = new Mensaje({
+        emisor: userId,
+        receptor: receptorId,
+        mensaje,
+        fechaEnvio: new Date(),
+      });
 
-    await nuevoMensaje.save(); // Guardar en la base de datos
+      await nuevoMensaje.save(); // Guardar en la base de datos
 
-    // Emitir el mensaje solo al receptor
-    socket.to(usuariosConectados[receptorId]?.socketId).emit('nuevoMensaje', {
-      emisorId: userId,
-      mensaje,
-      fechaEnvio: nuevoMensaje.fechaEnvio,
-    });
-  } catch (error) {
-    console.error('Error al enviar el mensaje:', error);
-  }
-});
+      if (usuariosConectados[receptorId]) {
+        socket.to(usuariosConectados[receptorId].socketId).emit('nuevoMensaje', {
+          emisorId: userId,
+          mensaje,
+          fechaEnvio: nuevoMensaje.fechaEnvio,
+        });
+      } else {
+        console.log('Receptor no está conectado, el mensaje se guardará en la base de datos');
+      }
+    } catch (error) {
+      console.error('Error al enviar el mensaje:', error);
+    }
+  });
+
   // Desconectar cliente
   socket.on('disconnect', () => {
     console.log('Cliente desconectado', socket.id);
     if (userId) {
       delete usuariosConectados[userId]; // Eliminar de la lista de conectados
-      // Emitir lista actualizada a todos los clientes
       io.emit('actualizarUsuariosConectados', Object.values(usuariosConectados));
     }
   });
@@ -151,3 +151,4 @@ socket.on('enviarMensaje', async ({ receptorId, mensaje }) => {
 server.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+ 
