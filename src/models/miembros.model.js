@@ -11,7 +11,6 @@ const miembroSchema = new mongoose.Schema({
     ref: 'admin',
     required:   true
   },
-
   estadoCivil: { 
     type: String, 
     required: true 
