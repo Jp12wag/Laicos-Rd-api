@@ -19,6 +19,8 @@ const arquidiocesisRoutes = require('./routes/arquidiocesis.routes');
 const diocesisRoutes = require('./routes/diocesis.routes');
 const parroquiaRoutes = require('./routes/parroquia.routes');
 const routesMensaje = require('./routes/mensaje.routes');
+const Notificacion = require('./notificaciones/notificacion');
+
 
 const app = express();
 const server = http.createServer(app);
