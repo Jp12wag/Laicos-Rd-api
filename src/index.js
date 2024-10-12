@@ -2,13 +2,13 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const socketIo = require('socket.io');
-const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const connectDB = require('./db/conexion');
 
 // Modelos
 const Mensaje = require('./models/mensaje.model');
 const Admin = require('./models/administradores.model');
+const SolicitudRoutes=require('./routes/solicitud.routes');
 
 // Rutas
 const miembroRoutes = require('./routes/miembro.routes');
@@ -19,6 +19,9 @@ const arquidiocesisRoutes = require('./routes/arquidiocesis.routes');
 const diocesisRoutes = require('./routes/diocesis.routes');
 const parroquiaRoutes = require('./routes/parroquia.routes');
 const routesMensaje = require('./routes/mensaje.routes');
+const routesConversaciones = require('./routes/conversacion.router');
+const Notificacion = require('./notificaciones/notificacion');
+
 
 const app = express();
 const server = http.createServer(app);
@@ -55,6 +58,8 @@ app.use('/api/archidiocesis', arquidiocesisRoutes);
 app.use('/api/diocesis', diocesisRoutes);
 app.use('/api/parroquia', parroquiaRoutes);
 app.use('/api/mensajes', routesMensaje);
+app.use('/api/', routesConversaciones);
+app.use('/api/solicitud',SolicitudRoutes);
 
 // Middleware JWT para Socket.io
 io.use(async (socket, next) => {
@@ -79,76 +84,107 @@ io.use(async (socket, next) => {
   }
 });
 
-// Almacenar usuarios conectados
-let usuariosConectados = {};
+const usuariosConectados = {};
 
+// Evento principal de conexión
 io.on('connection', (socket) => {
-  const userId = socket.userInfo._id;
-
-  if (!userId) return;
-  socket.join(userId);
-
-  // Agregar el usuario a la lista de conectados
-  usuariosConectados[userId] = { socketId: socket.id, userInfo: socket.userInfo };
-  console.log(usuariosConectados);
-
-  // Emitir lista actualizada al usuario actual (sin incluir al propio usuario)
-  socket.emit('actualizarUsuariosConectados', Object.values(usuariosConectados).filter(u => u.userInfo._id !== userId));
-
-  // Cargar historial de chat cuando el usuario se conecta
-  socket.on('cargarHistorial', async ({ receptorId }) => {
-    try {
-      const historial = await Mensaje.find({
-        $or: [
-          { emisor: userId, receptor: receptorId },
-          { emisor: receptorId, receptor: userId },
-        ],
-      }).sort({ fechaEnvio: 1 });
-
-      socket.emit('historialMensajes', historial);
-    } catch (error) {
-      console.error('Error al cargar el historial:', error);
-    }
-  });
-
-  // Enviar un mensaje
-  socket.on('enviarMensaje', async ({ receptorId, mensaje }) => {
-    try {
-      const nuevoMensaje = new Mensaje({
-        emisor: userId,
-        receptor: receptorId,
-        mensaje,
-        fechaEnvio: new Date(),
-      });
-
-      await nuevoMensaje.save(); // Guardar en la base de datos
-
-      if (usuariosConectados[receptorId]) {
-        socket.to(usuariosConectados[receptorId].socketId).emit('nuevoMensaje', {
-          emisorId: userId,
-          mensaje,
-          fechaEnvio: nuevoMensaje.fechaEnvio,
-        });
-      } else {
-        console.log('Receptor no está conectado, el mensaje se guardará en la base de datos');
+    const userId = socket.userInfo._id;
+  
+    if (!userId) return;
+    socket.join(userId);
+  
+    // Agregar el usuario a la lista de conectados
+    usuariosConectados[userId] = { socketId: socket.id, userInfo: socket.userInfo };
+  
+    // Emitir lista actualizada de usuarios conectados (sin incluir al usuario actual)
+    socket.emit('actualizarUsuariosConectados', Object.values(usuariosConectados).filter(u => u.userInfo._id !== userId));
+  
+    // Enviar los mensajes no leídos cuando el usuario se conecta
+    (async () => {
+      try {
+        const mensajesNoLeidos = await Mensaje.find({ receptor: userId, leido: false });
+  
+        if (mensajesNoLeidos.length > 0) {
+          // Emitir los mensajes no leídos al usuario conectado
+          mensajesNoLeidos.forEach((mensaje) => {
+            socket.emit('nuevoMensaje', {
+              emisorId: mensaje.emisor,
+              mensaje: mensaje.mensaje,
+              fechaEnvio: mensaje.fechaEnvio
+            });
+          });
+  
+          // Marcar los mensajes como leídos
+          await Mensaje.updateMany(
+            { receptor: userId, leido: false },
+            { $set: { leido: true } }
+          );
+        }
+      } catch (err) {
+        console.error('Error al buscar mensajes no leídos:', err);
       }
-    } catch (error) {
-      console.error('Error al enviar el mensaje:', error);
-    }
-  });
+    })();
+  
+    // Cargar historial de chat cuando el usuario selecciona un receptor
+    socket.on('cargarHistorial', async ({ receptorId }) => {
+      try {
+        const historial = await Mensaje.find({
+          $or: [
+            { emisor: userId, receptor: receptorId },
+            { emisor: receptorId, receptor: userId },
+          ],
+        }).sort({ fechaEnvio: 1 });
+  
+        socket.emit('historialMensajes', historial);
+        console.log(historial)
+      } catch (error) {
+        console.error('Error al cargar el historial:', error);
+      }
+    });
+  
+    // Enviar un mensaje a otro usuario
+    socket.on('enviarMensaje', async ({ receptorId, mensaje }) => {
+      try {
+        const nuevoMensaje = new Mensaje({
+          emisor: userId,
+          receptor: receptorId,
+          mensaje,
+          fechaEnvio: new Date()
+        });
+  
+        await nuevoMensaje.save(); // Guardar en la base de datos
+       
+        // Enviar el mensaje si el receptor está conectado
+        if (usuariosConectados[receptorId]) {
+          socket.to(usuariosConectados[receptorId].socketId).emit('nuevoMensaje', {
+            emisor: userId,
+            mensaje,
+            fechaEnvio: nuevoMensaje.fechaEnvio,
+            leido: true    
+          });
+          console.log(usuariosConectados)
+        } else {
+          console.log('Receptor no está conectado, el mensaje se guardará en la base de datos');
+        }
+      } catch (error) {
+        console.error('Error al enviar el mensaje:', error);
+      }
+    });
+      
+  
+    // Desconectar al usuario
+    socket.on('disconnect', () => {
+      console.log('Cliente desconectado', socket.id);
+      if (userId) {
+        delete usuariosConectados[userId]; // Eliminar de la lista de conectados
+        io.emit('actualizarUsuariosConectados', Object.values(usuariosConectados));
+      }
+    });
 
-  // Desconectar cliente
-  socket.on('disconnect', () => {
-    console.log('Cliente desconectado', socket.id);
-    if (userId) {
-      delete usuariosConectados[userId]; // Eliminar de la lista de conectados
-      io.emit('actualizarUsuariosConectados', Object.values(usuariosConectados));
-    }
+
   });
-});
 
 // Iniciar el servidor
 server.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
- 
