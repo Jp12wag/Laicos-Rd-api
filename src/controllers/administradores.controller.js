@@ -168,7 +168,9 @@ controllers.logoutAllAdministrador = async (req, res) => {
 
 controllers.updateAdministrador = async (req, res) => {
   try {
+   
     const administradorActualizado = await Administrador.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    administradorActualizado.markModified('password');
     if (!administradorActualizado) {
       return res.status(404).json({ message: 'Administrador no encontrado' });
     }
