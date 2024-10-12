@@ -18,6 +18,6 @@ router.post('/rechazar', auth, solicitudAmistadController.RecharSolicitud);
 router.get('/pendientes', auth, solicitudAmistadController.getSolicitudesPendientes);
 
 // Opcional: obtener la lista de amigos aceptados
-router.get('/aceptadas', auth, solicitudAmistadController.getAmigos);
+router.get('/aceptadas', auth, solicitudAmistadController.obtenerAmigos);
 
 module.exports = router;

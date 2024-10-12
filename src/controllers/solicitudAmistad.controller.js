@@ -39,21 +39,38 @@ controllers.getAmigos = async (req, res) => {
 };
 
 
-// Aceptar solicitud de amistad
 controllers.AceptarSolicitud = async (req, res) => {
- const { solicitudId } = req.body;
- const receptorId = req.administrador._id;
+  const { solicitudId } = req.body;
+  const receptorId = req.administrador._id; // El usuario autenticado que está aceptando la solicitud
 
   try {
-    const solicitud = await SolicitudAmistad.findByIdAndUpdate( 
-      { _id: solicitudId, receptor: receptorId }
-      ,{ estado: 'aceptada' },
-      { new: true } 
+    // Actualizamos el estado de la solicitud a 'aceptada'
+    const solicitud = await SolicitudAmistad.findByIdAndUpdate(
+      { _id: solicitudId, receptor: receptorId },
+      { estado: 'aceptada' },
+      { new: true }
     );
+
     if (solicitud) {
-      const amigo = await Administrador.findById(solicitud.emisor); // O la función que uses para obtener el amigo
-      console.log("Encontre un amigo",amigo)
-      res.status(200).json({ message: 'Solicitud de amistad aceptada.', amigo });
+      // Añadir al emisor en la lista de amigos del receptor
+      await Administrador.findByIdAndUpdate(receptorId, { $push: { amigos: solicitud.emisor } });
+
+      // Añadir al receptor en la lista de amigos del emisor
+      await Administrador.findByIdAndUpdate(solicitud.emisor, { $push: { amigos: receptorId } });
+
+       // Obtener la información tanto del emisor como del receptor para actualizar sus respectivas listas
+       const emisor = await Administrador.findById(solicitud.emisor, 'nombre correo');
+       const receptor = await Administrador.findById(receptorId, 'nombre correo');
+      // Obtener la información del nuevo amigo para devolverla en la respuesta
+      const amigo = await Administrador.findById(solicitud.emisor, 'nombre correo');
+
+      // Devolver ambos amigos en la respuesta para que el frontend pueda actualizar ambas listas
+      res.status(200).json({
+        message: 'Solicitud de amistad aceptada.',
+        emisor,     // Información del emisor (quien envió la solicitud)
+        receptor    // Información del receptor (quien aceptó la solicitud)
+      });
+
     } else {
       res.status(404).json({ error: 'Solicitud no encontrada.' });
     }
@@ -99,24 +116,30 @@ controllers.SolicitudesPendientes = async (req, res) => {
 };
 
 controllers.obtenerAmigos = async (req, res) => {
-  const userId = req.administrador._id;
+  const userId = req.administrador._id;  // El ID del usuario autenticado
 
   try {
+    // Buscar solicitudes aceptadas donde el usuario es emisor o receptor
     const solicitudesAceptadas = await SolicitudAmistad.find({
       $or: [{ emisor: userId }, { receptor: userId }],
       estado: 'aceptada'
     });
-
-    const amigoIds = solicitudesAceptadas.map(solicitud => (
-      solicitud.emisor.toString() === userId ? solicitud.receptor : solicitud.emisor
-    ));
-
-    const amigos = await Admin.find({ _id: { $in: amigoIds } }, 'nombre apellido');
-
+    
+    // Crear una lista de IDs de amigos excluyendo el propio ID del usuario
+    const amigoIds = solicitudesAceptadas.map(solicitud => {
+      return solicitud.emisor.toString() === userId.toString() 
+        ? solicitud.receptor  // Si el usuario es el emisor, el amigo es el receptor
+        : solicitud.emisor;   // Si el usuario es el receptor, el amigo es el emisor
+    });
+  
+    // Buscar la información de los amigos usando los IDs
+    const amigos = await Administrador.find({ _id: { $in: amigoIds } }, '_id nombre apellido correo');
+   
     res.status(200).json(amigos);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener la lista de amigos.' });
   }
 };
+
 
 module.exports = controllers;

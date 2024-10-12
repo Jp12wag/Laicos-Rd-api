@@ -4,7 +4,7 @@ const controllers = {};
 
 controllers.obtenerConversaciones= async (req, res) => {
   try {
-    const userId = req.userId; // Obtén el ID del usuario autenticado
+    const userId = req.administrador._id; // Obtén el ID del usuario autenticado
 
     const conversaciones = await Conversacion.find({
       participantes: userId
