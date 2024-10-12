@@ -319,10 +319,14 @@ controllers.resetPassword = async (req, res) => {
     if (!administrador) {
       return res.status(400).send({ error: 'Token de restablecimiento inválido o expirado.' });
     }
-
+  // Encripta la nueva contraseña
+   //administrador.password = await bcrypt.hash(newPassword);
     // Actualiza la contraseña
     administrador.password = newPassword;
-    administrador.tokens = null; // Elimina el token de restablecimiento
+    administrador.markModified('password');
+     // Elimina el token de restablecimiento
+     administrador.passwordResetToken = null; 
+     administrador.passwordResetTokenExpires = null; // También elimina la expiración
     await administrador.save();
 
     res.status(200).send({ message: 'Contraseña restablecida con éxito.' });
