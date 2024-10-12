@@ -2,6 +2,10 @@ const cron = require('node-cron');
 const nodemailer = require('nodemailer');
 const Actividad = require('../models/activity.model'); // Asegúrate de que la ruta sea correcta
 const Adminstrador = require('../models/administradores.model');
+
+
+// Función para enviar recordatorios
+const enviarRecordatorios = async () => {
 // Configurar Nodemailer
 const transporter = nodemailer.createTransport({
   host: process.env.HOST,
@@ -13,10 +17,6 @@ const transporter = nodemailer.createTransport({
   logger: true, // Habilita el logging
   debug: true // Muestra información adicional sobre el proceso
 });
-
-
-// Función para enviar recordatorios
-const enviarRecordatorios = async () => {
 
   const ahora = new Date();
   const diferenciaDeZonaHoraria = ahora.getTimezoneOffset() * 60000; // Diferencia en milisegundos
