@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+require('dotenv').config();
 
 const actividadSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
@@ -7,6 +8,7 @@ const actividadSchema = new mongoose.Schema({
   },
   fecha: { type: Date, required: true },
   ubicacion: { type: String, required: true },
+  enlace: { type: String},
   estado: { type: String, enum: ['Pendiente', 'En Curso', 'Finalizado'], default: 'Pendiente' },
   maxParticipantes: { type: Number, default: 0 }, // Si tienes un límite de inscripciones
   inscritos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'admin' }] // Lista de IDs de los inscritos

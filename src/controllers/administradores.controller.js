@@ -170,10 +170,12 @@ controllers.updateAdministrador = async (req, res) => {
   try {
    
     const administradorActualizado = await Administrador.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    administradorActualizado.markModified('password');
+    
     if (!administradorActualizado) {
       return res.status(404).json({ message: 'Administrador no encontrado' });
     }
+    administradorActualizado.markModified('password');
+    administradorActualizado.save();
     res.status(200).json(administradorActualizado);
   } catch (err) {
     res.status(400).json({ message: err.message });

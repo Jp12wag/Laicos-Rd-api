@@ -1,10 +1,19 @@
 const Actividad = require('../models/activity.model');
+require('dotenv').config();
+const CryptoJS = require('crypto-js');
+
+
 
 // Crear una actividad
 exports.createActividad = async (req, res) => {
   try {
     const nuevaActividad = new Actividad(req.body);
-    console.log(nuevaActividad);
+     // Encriptar el ID de la actividad
+     const idEncriptado = nuevaActividad._id.toString();
+     console.log(idEncriptado)
+     // Generar el enlace y actualizar el registro
+     nuevaActividad.enlace = `http://localhost:3000/actividades/${idEncriptado}`;
+
     await nuevaActividad.save();
     res.status(201).json({ message: 'Actividad creada', actividad: nuevaActividad });
   } catch (error) {
@@ -25,8 +34,17 @@ exports.getActividades = async (req, res) => {
 // Obtener una actividad por ID
 exports.getActividadById = async (req, res) => {
   try {
-    const actividad = await Actividad.findById(req.params.id);
+
+    const bytes = CryptoJS.AES.decrypt(req.params.id, process.env.JWT_SECRET);
+    console.log(req.params.id)
+    const actividadIdDesencriptado = req.params.id  ;
+    console.log(actividadIdDesencriptado)
+    if (!actividadIdDesencriptado) return res.status(400).json({ message: 'ID inválido' });
+
+    const actividad = await Actividad.findById(actividadIdDesencriptado);
+    console.log(actividad)
     if (!actividad) return res.status(404).json({ message: 'Actividad no encontrada' });
+
     res.status(200).json(actividad);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener la actividad', error });
