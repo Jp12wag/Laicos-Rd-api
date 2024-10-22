@@ -126,12 +126,13 @@ io.on('connection', (socket) => {
 
 
   // Emitir lista actualizada de usuarios conectados (sin incluir al usuario actual)
+  console.log(usuariosConectados)
   socket.emit('actualizarUsuariosConectados', Object.values(usuariosConectados).filter(u => u.userInfo._id !== userId));
 
   // Enviar los mensajes no leídos cuando el usuario se conecta
   (async () => {
     try {
-      const mensajesNoLeidos = await Mensaje.find({ receptor: userId, leido: false });
+      const mensajesNoLeidos = await Mensaje.find({ receptor: userId,  leido:false });
 
       if (mensajesNoLeidos.length > 0) {
         // Emitir los mensajes no leídos al usuario conectado
@@ -204,7 +205,7 @@ io.on('connection', (socket) => {
           emisor: userId,
           mensaje,
           fechaEnvio: nuevoMensaje.fechaEnvio,
-          leido: false
+          leido: true
         });
         console.log(usuariosConectados)
       } else {
@@ -214,9 +215,7 @@ io.on('connection', (socket) => {
       console.error('Error al enviar el mensaje:', error);
     }
   });
-
-
-  // Desconectar al usuario
+ // Desconectar al usuario
   socket.on('disconnect', () => {
     console.log('Cliente desconectado', socket.id);
     if (userId) {
@@ -226,6 +225,7 @@ io.on('connection', (socket) => {
   });
 
 
+  
 });
 
 // Iniciar el servidor
