@@ -86,11 +86,6 @@ controllers.loginAdministrador = async (req, res) => {
       return res.status(400).send({ error: 'Credenciales incorrectas' });
     }
 
-  /*   // Verifica si el usuario tiene 2FA habilitado
-    if (administrador.twoFactorSecret) {
-      // Aquí se debe esperar el código 2FA del cliente
-      return res.status(200).send({ twoFactorRequired: true, administrador }); // Indica que se requiere 2FA
-    }*/
 
      // Si el administrador tiene 2FA habilitado
      if (administrador.isTwoFaEnabled && administrador.twoFactorSecret) {
@@ -118,9 +113,9 @@ controllers.verifyTwoFactor = async (req, res) => {
 
     const administrador = await Administrador.findById(req.body.administradorId); // Asegúrate de pasar el administradorId correcto
     const twoFactorCode = req.body.token; // Código 2FA ingresado por el usuario
-   console.log(twoFactorCode)
+  
     const isVerified = administrador.verifyTwoFactorToken(twoFactorCode);
-    console.log(isVerified)
+   
     if (!isVerified) {
       return res.status(401).send({ error: 'Código 2FA inválido' });
     }
