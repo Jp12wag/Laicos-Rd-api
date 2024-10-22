@@ -33,7 +33,7 @@ const asignarParroquiaMiembro = async (req, res) => {
 controllers.getMiembroById = async (req, res) => {
   try {
       
-    const miembro = await Miembro.findOne({idAdministrador: req.params.id});
+    const miembro = await Miembro.findOne({idAdministrador: req.params.id}).populate('Parroquia');
    
     if (!miembro) {
       return res.status(404).json({ message: 'Miembro no encontrado' });

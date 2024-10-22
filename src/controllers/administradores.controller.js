@@ -86,11 +86,6 @@ controllers.loginAdministrador = async (req, res) => {
       return res.status(400).send({ error: 'Credenciales incorrectas' });
     }
 
-  /*   // Verifica si el usuario tiene 2FA habilitado
-    if (administrador.twoFactorSecret) {
-      // Aquí se debe esperar el código 2FA del cliente
-      return res.status(200).send({ twoFactorRequired: true, administrador }); // Indica que se requiere 2FA
-    }*/
 
      // Si el administrador tiene 2FA habilitado
      if (administrador.isTwoFaEnabled && administrador.twoFactorSecret) {
@@ -118,9 +113,9 @@ controllers.verifyTwoFactor = async (req, res) => {
 
     const administrador = await Administrador.findById(req.body.administradorId); // Asegúrate de pasar el administradorId correcto
     const twoFactorCode = req.body.token; // Código 2FA ingresado por el usuario
-   console.log(twoFactorCode)
+  
     const isVerified = administrador.verifyTwoFactorToken(twoFactorCode);
-    console.log(isVerified)
+   
     if (!isVerified) {
       return res.status(401).send({ error: 'Código 2FA inválido' });
     }
@@ -168,10 +163,14 @@ controllers.logoutAllAdministrador = async (req, res) => {
 
 controllers.updateAdministrador = async (req, res) => {
   try {
+   
     const administradorActualizado = await Administrador.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    
     if (!administradorActualizado) {
       return res.status(404).json({ message: 'Administrador no encontrado' });
     }
+    administradorActualizado.markModified('password');
+    administradorActualizado.save();
     res.status(200).json(administradorActualizado);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -319,10 +318,14 @@ controllers.resetPassword = async (req, res) => {
     if (!administrador) {
       return res.status(400).send({ error: 'Token de restablecimiento inválido o expirado.' });
     }
-
+  // Encripta la nueva contraseña
+   //administrador.password = await bcrypt.hash(newPassword);
     // Actualiza la contraseña
     administrador.password = newPassword;
-    administrador.tokens = null; // Elimina el token de restablecimiento
+    administrador.markModified('password');
+     // Elimina el token de restablecimiento
+     administrador.passwordResetToken = null; 
+     administrador.passwordResetTokenExpires = null; // También elimina la expiración
     await administrador.save();
 
     res.status(200).send({ message: 'Contraseña restablecida con éxito.' });
