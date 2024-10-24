@@ -36,13 +36,13 @@ exports.getActividadById = async (req, res) => {
   try {
 
     const bytes = CryptoJS.AES.decrypt(req.params.id, process.env.JWT_SECRET);
-    console.log(req.params.id)
+   
     const actividadIdDesencriptado = req.params.id  ;
-    console.log(actividadIdDesencriptado)
+  
     if (!actividadIdDesencriptado) return res.status(400).json({ message: 'ID inválido' });
 
     const actividad = await Actividad.findById(actividadIdDesencriptado);
-    console.log(actividad)
+
     if (!actividad) return res.status(404).json({ message: 'Actividad no encontrada' });
 
     res.status(200).json(actividad);

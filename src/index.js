@@ -23,6 +23,7 @@ const routesMensaje = require('./routes/mensaje.routes');
 const routesConversaciones = require('./routes/conversacion.router');
 const Notificacion = require('./notificaciones/notificacion');
 const ChatGrupal = require('./routes/chatGrupal.routes');
+const Comunidad = require('./routes/comunidad.routes');
 
 
 const app = express();
@@ -63,6 +64,7 @@ app.use('/api/mensajes', routesMensaje);
 app.use('/api/', routesConversaciones);
 app.use('/api/solicitud', SolicitudRoutes);
 app.use('/api/chatGrupal', ChatGrupal);
+app.use('/api/comunidades',Comunidad)
 
 // Middleware JWT para Socket.io
 io.use(async (socket, next) => {

@@ -56,14 +56,14 @@ controllers.createAdministrador = async (req, res) => {
 };
 
 
-controllers.getAdministradores = async (req, res) => {
-  try {
-    const administradores = await Administrador.find();
-    res.status(200).json(administradores);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
+  controllers.getAdministradores = async (req, res) => {
+    try {
+      const administradores = await Administrador.find();
+      res.status(200).json(administradores);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  };
 
 controllers.getAdministradorById = async (req, res) => {
   try {

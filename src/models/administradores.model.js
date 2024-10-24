@@ -72,18 +72,18 @@ const administradorSchema = new mongoose.Schema({
       required: true
     },
     userAgent:{
-      type: String, // Define que será una cadena que almacena información del dispositivo/navegador
+      type: String, 
       required: true
     }
   }],
   twoFactorSecret: {
     type: String,
-    required: false // Este campo se utilizará para almacenar el secreto de 2FA
+    required: false 
   },
   isTwoFaEnabled: {
     type: Boolean,
     default:false,
-    required: false // Este campo se utilizará para almacenar el secreto de 2FA
+    required: false 
   },
   fechaRegistro: {
     type: Date,
@@ -134,6 +134,9 @@ administradorSchema.methods.generateAuthToken = async function (userAgent) {
   if (!admin.tokens) {
     admin.tokens = []; // Inicializa tokens como un array si no está definido
   }
+  if (admin.tokens.length >= 5) {
+    admin.tokens.shift(); // Elimina el token más antiguo
+  }
   admin.tokens = admin.tokens.concat({ token, userAgent });
 
   await admin.save();
@@ -181,6 +184,12 @@ administradorSchema.statics.findByPasswordResetToken = function (token) {
     passwordResetTokenExpires: { $gt: Date.now() } // Verifica que no haya expirado
   });
 };
+
+administradorSchema.methods.disableTwoFactorAuth = function () {
+  this.twoFactorSecret = null;
+  this.isTwoFaEnabled = false;
+};
+
 
 const Admin = mongoose.model('admin', administradorSchema)
 
