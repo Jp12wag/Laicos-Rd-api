@@ -100,6 +100,7 @@ controllers.eliminarComunidad = async (req, res) => {
       'administradores.administrador': req.administrador._id,
       'administradores.rol': 'admin'
     });
+    console.log(comunidad)
 
     if (!comunidad) {
       return res.status(404).send({ error: 'Comunidad no encontrada o no tiene permisos para eliminarla' });

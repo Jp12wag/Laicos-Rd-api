@@ -11,11 +11,10 @@ controllers.createAdministrador = async (req, res) => {
     
     // Guarda el nuevo administrador
     await administrador.save();
-
     // Configuración del transportador de Nodemailer
     const transporter = nodemailer.createTransport({
       host: process.env.HOST,
-      port: 2525,
+      port: process.env.Puerto,
       auth: {
         user: process.env.EMAIL_USER, // Tu correo de Hotmail
         pass: process.env.EMAIL_PASS // La contraseña de tu correo
@@ -23,7 +22,7 @@ controllers.createAdministrador = async (req, res) => {
       logger: true, // Habilita el logging
       debug: true // Muestra información adicional sobre el proceso
     });
-
+    
     // Opciones del correo
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -34,7 +33,7 @@ controllers.createAdministrador = async (req, res) => {
               <p>Gracias por registrarte  en nuestra plataforma.</p>
               <p>Tu cuenta ha sido creada exitosamente. Puedes iniciar sesión utilizando tus credenciales.</p>
               <p>Saludos,</p>
-              <p>El equipo de la </p>
+              <p>El equipo de laicos Rd </p>
           `
     };
 
@@ -223,7 +222,7 @@ controllers.verificarToken = async (req, res) => {
       // Configuración del transportador de Nodemailer
       const transporter = nodemailer.createTransport({
         host: process.env.HOST,
-        port: 2525,
+        port: process.env.Puerto,
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS
@@ -272,7 +271,7 @@ controllers.requestResetPassword = async (req, res) => {
     // Configuración del transportador de Nodemailer
     const transporter = nodemailer.createTransport({
       host: process.env.HOST,
-      port: 2525,
+      port: process.env.Puerto,
       auth: {
         user: process.env.EMAIL_USER, // Tu correo de Hotmail
         pass: process.env.EMAIL_PASS
@@ -314,7 +313,6 @@ controllers.resetPassword = async (req, res) => {
   try {
     // Busca al administrador por el token y verifica que sea válido
     const administrador = await Administrador.findByPasswordResetToken(token);
-    console.log(administrador);
     if (!administrador) {
       return res.status(400).send({ error: 'Token de restablecimiento inválido o expirado.' });
     }
@@ -338,11 +336,8 @@ controllers.resetPassword = async (req, res) => {
 controllers.getSessions = async (req, res) => {
   try {
 
-    const adminId = req.params.id; // Asegúrate de que la ID del administrador esté disponible
-
+    const adminId = req.params.id;
     const administrador = await Administrador.findById(adminId);
-
-
     if (!administrador) {
       return res.status(404).json({ message: 'Administrador no encontrado' });
     }
