@@ -17,5 +17,15 @@ router.put('/:comunidadId', auth, comunidadController.actualizarComunidad);
 
 // Ruta para eliminar comunidad
 router.delete('/:comunidadId', auth, comunidadController.eliminarComunidad);
+router.get('/canales/:comunidadId', auth, comunidadController.listarCanales);
+router.get('/:id', comunidadController.obtenerComunidadPorId);
+// Crear canal
+router.post('/canales', auth,  comunidadController.crearCanal);
+
+// Actualizar canal
+router.put('/canales/:canalId', auth, comunidadController.actualizarCanal);
+
+// Eliminar canal
+router.delete('/canales/:canalId', auth, comunidadController.eliminarCanal);
 
 module.exports = router;

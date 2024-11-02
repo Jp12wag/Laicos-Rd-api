@@ -1,5 +1,6 @@
 const Comunidad = require('../models/comunidad.model');
 const Admin = require('../models/administradores.model');
+const Canal = require('../models/Canal.model');
 const controllers = {};
 
 // Crear comunidad a partir de un administrador
@@ -19,6 +20,18 @@ controllers.crearComunidad = async (req, res) => {
     });
 
     await comunidad.save();
+
+    const canalesPorDefecto = [
+      { nombre: 'General', tipo: 'texto', comunidad: comunidad._id },
+      { nombre: 'Voz', tipo: 'voz', comunidad: comunidad._id },
+    ];
+
+
+    const canalesCreados = await Canal.insertMany(canalesPorDefecto);
+
+    comunidad.canales = canalesCreados.map(canal => canal._id);
+    await comunidad.save();
+
     res.status(201).send(comunidad);
   } catch (e) {
     res.status(400).send(e);
@@ -61,6 +74,15 @@ controllers.listarComunidades = async (req, res) => {
   }
 };
 
+controllers.listarCanales = async (req, res) => {
+  try {
+    const { comunidadId } = req.params;
+    const canales = await Canal.find({ comunidad: comunidadId });
+    res.send(canales);
+  } catch (e) {
+    res.status(500).send(e);
+  }
+};
 
 // Actualizar una comunidad
 controllers.actualizarComunidad = async (req, res) => {
@@ -117,6 +139,76 @@ controllers.eliminarComunidad = async (req, res) => {
     res.status(500).send(e);
   }
 };
+
+controllers.obtenerComunidadPorId = async (req, res) => {
+  try {
+      const { id } = req.params;
+     
+      const comunidad = await Comunidad.findById(id).populate('canales').populate({
+        path: 'administradores.administrador', // Realizar populate en el campo 'administrador' de cada objeto en 'administradores'
+        model: 'admin' // Nombre del modelo referenciado (Admin)
+      });
+
+      if (!comunidad) {
+          return res.status(404).json({ message: 'Comunidad no encontrada' });
+      }
+      res.status(200).json(comunidad);
+  } catch (error) {
+      console.error('Error al obtener la comunidad por ID:', error);
+      res.status(500).json({ message: 'Error al obtener la comunidad' });
+  }
+
+}
+
+controllers.crearCanal = async (req, res) => {
+  try {
+    const { comunidadId, nombre, tipo } = req.body;
+    const canal = new Canal({ nombre, tipo, comunidad: comunidadId });
+    await canal.save();
+
+    // Añadir el canal a la comunidad
+    const comunidad = await Comunidad.findById(comunidadId);
+    comunidad.canales.push(canal._id);
+    await comunidad.save();
+
+    res.status(201).json(canal);
+  } catch (e) {
+    res.status(400).json({ message: 'Error al crear el canal', error: e });
+  }
+};
+
+// Actualizar canal por ID
+controllers.actualizarCanal = async (req, res) => {
+  try {
+    const { canalId } = req.params;
+    const { nombre, tipo } = req.body;
+
+    const canal = await Canal.findByIdAndUpdate(canalId, { nombre, tipo }, { new: true });
+    if (!canal) return res.status(404).json({ message: 'Canal no encontrado' });
+
+    res.status(200).json(canal);
+  } catch (e) {
+    res.status(400).json({ message: 'Error al actualizar el canal', error: e });
+  }
+};
+
+// Eliminar canal por ID
+controllers.eliminarCanal = async (req, res) => {
+  try {
+    const { canalId } = req.params;
+
+    const canal = await Canal.findByIdAndDelete(canalId);
+    if (!canal) return res.status(404).json({ message: 'Canal no encontrado' });
+
+    // Remover el canal de la comunidad
+    await Comunidad.findByIdAndUpdate(canal.comunidad, { $pull: { canales: canalId } });
+
+    res.status(200).json({ message: 'Canal eliminado correctamente' });
+  } catch (e) {
+    res.status(400).json({ message: 'Error al eliminar el canal', error: e });
+  }
+};
+
 
 
 module.exports = controllers;

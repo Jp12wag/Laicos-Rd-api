@@ -64,7 +64,7 @@ app.use('/api/mensajes', routesMensaje);
 app.use('/api/', routesConversaciones);
 app.use('/api/solicitud', SolicitudRoutes);
 app.use('/api/chatGrupal', ChatGrupal);
-app.use('/api/comunidades',Comunidad)
+app.use('/api/comunidades', Comunidad)
 
 // Middleware JWT para Socket.io
 io.use(async (socket, next) => {
@@ -94,6 +94,7 @@ const usuariosConectados = {};
 // Evento principal de conexión
 io.on('connection', (socket) => {
   const userId = socket.userInfo._id;
+  
 
   if (!userId) return;
   socket.join(userId);
@@ -126,15 +127,36 @@ io.on('connection', (socket) => {
     io.to(grupoId).emit('nuevoMensajeGrupo', nuevoMensaje);
   });
 
+  socket.on('join-channel', (channelId) => {
+    socket.join(channelId);
+    console.log(`Usuario ${socket.id} se unió al canal ${channelId}.`);
+
+    // Notifica a los demás usuarios en el canal que un nuevo usuario se unió
+    socket.broadcast.to(channelId).emit('user-joined', socket.id);
+});
+
+socket.on('signal', (data) => {
+  // Enviar la señal al usuario correspondiente
+  io.to(data.to).emit('signal', { from: socket.id, signal: data.signal });
+  console.log(data)
+});
+
+socket.on('leave-channel', (channelId) => {
+  socket.leave(channelId);
+  console.log(`Usuario ${socket.id} salió del canal ${channelId}.`);
+
+  // Notifica a los demás usuarios en el canal que un usuario salió
+  socket.broadcast.to(channelId).emit('user-left', socket.id);
+});
 
   // Emitir lista actualizada de usuarios conectados (sin incluir al usuario actual)
-  console.log(usuariosConectados)
+
   socket.emit('actualizarUsuariosConectados', Object.values(usuariosConectados).filter(u => u.userInfo._id !== userId));
 
   // Enviar los mensajes no leídos cuando el usuario se conecta
   (async () => {
     try {
-      const mensajesNoLeidos = await Mensaje.find({ receptor: userId,  leido:false });
+      const mensajesNoLeidos = await Mensaje.find({ receptor: userId, leido: false });
 
       if (mensajesNoLeidos.length > 0) {
         // Emitir los mensajes no leídos al usuario conectado
@@ -169,7 +191,7 @@ io.on('connection', (socket) => {
       }).sort({ fechaEnvio: 1 });
 
       socket.emit('historialMensajes', historial);
-      console.log(historial)
+   
     } catch (error) {
       console.error('Error al cargar el historial:', error);
     }
@@ -184,7 +206,7 @@ io.on('connection', (socket) => {
 
       // Enviar el historial de mensajes al cliente
       socket.emit('historialMensajes', historial);
-      console.log(historial);
+     
     } catch (error) {
       console.error('Error al cargar el historial:', error);
     }
@@ -209,7 +231,7 @@ io.on('connection', (socket) => {
           fechaEnvio: nuevoMensaje.fechaEnvio,
           leido: true
         });
-        console.log(usuariosConectados)
+      
       } else {
         console.log('Receptor no está conectado, el mensaje se guardará en la base de datos');
       }
@@ -217,9 +239,8 @@ io.on('connection', (socket) => {
       console.error('Error al enviar el mensaje:', error);
     }
   });
- // Desconectar al usuario
+  // Desconectar al usuario
   socket.on('disconnect', () => {
-    console.log('Cliente desconectado', socket.id);
     if (userId) {
       delete usuariosConectados[userId]; // Eliminar de la lista de conectados
       io.emit('actualizarUsuariosConectados', Object.values(usuariosConectados));
@@ -227,7 +248,7 @@ io.on('connection', (socket) => {
   });
 
 
-  
+
 });
 
 // Iniciar el servidor

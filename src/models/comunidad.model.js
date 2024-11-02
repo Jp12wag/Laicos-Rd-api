@@ -19,7 +19,7 @@ const comunidadSchema = new mongoose.Schema({
     rol: {
       type: String,
       enum: ['admin', 'moderador', 'miembro'],
-      default: 'admin' // Los administradores serán "admin" por defecto al crear la comunidad
+      default: 'admin' 
     }
   }],
   canales: [{
