@@ -66,7 +66,7 @@ controllers.listarComunidades = async (req, res) => {
 controllers.actualizarComunidad = async (req, res) => {
   try {
     const { comunidadId } = req.params;
-    const { nombre, descripcion, visibilidad } = req.body;
+    const { nombre, descripcion, visibilidad } = req.body;  
 
     // Buscar la comunidad por su ID y verificar si el usuario es administrador de dicha comunidad
     const comunidad = await Comunidad.findOne({
@@ -93,6 +93,10 @@ controllers.actualizarComunidad = async (req, res) => {
 controllers.eliminarComunidad = async (req, res) => {
   try {
     const { comunidadId } = req.params;
+   
+    if (!req.administrador || !req.administrador._id) {
+      return res.status(403).send({ error: 'Acceso denegado. No se encontró el administrador.' });
+    }
 
     // Buscar la comunidad por su ID y verificar si el usuario es el administrador principal (rol 'admin')
     const comunidad = await Comunidad.findOne({
@@ -100,13 +104,14 @@ controllers.eliminarComunidad = async (req, res) => {
       'administradores.administrador': req.administrador._id,
       'administradores.rol': 'admin'
     });
-    console.log(comunidad)
 
     if (!comunidad) {
+      console.log(req.administrador._id)
       return res.status(404).send({ error: 'Comunidad no encontrada o no tiene permisos para eliminarla' });
     }
 
-    await comunidad.remove();
+    await Comunidad.findByIdAndDelete(comunidadId);
+
     res.send({ message: 'Comunidad eliminada correctamente' });
   } catch (e) {
     res.status(500).send(e);

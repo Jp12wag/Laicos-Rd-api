@@ -13,9 +13,9 @@ router.post('/agregar-miembro', auth, comunidadController.agregarMiembro);
 router.get('/comunidades', auth, comunidadController.listarComunidades);
 
 // Ruta para actualizar comunidad
-router.put('/comunidades/:comunidadId', auth, comunidadController.actualizarComunidad);
+router.put('/:comunidadId', auth, comunidadController.actualizarComunidad);
 
 // Ruta para eliminar comunidad
-router.delete('/comunidades/:comunidadId', auth, comunidadController.eliminarComunidad);
+router.delete('/:comunidadId', auth, comunidadController.eliminarComunidad);
 
 module.exports = router;
