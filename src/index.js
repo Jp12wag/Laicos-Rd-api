@@ -94,8 +94,8 @@ const usuariosConectados = {};
 // Evento principal de conexión
 io.on('connection', (socket) => {
   const userId = socket.userInfo._id;
+  console.log(`Nueva conexión de cliente: ${userId}`);
   
-
   if (!userId) return;
   socket.join(userId);
 
@@ -132,20 +132,48 @@ io.on('connection', (socket) => {
     socket.join(channelId);
     console.log(`Usuario ${socket.id} se unió al canal ${channelId}.`);
 
-    // Notifica a los demás usuarios en el canal que un nuevo usuario se unió
-    socket.broadcast.to(channelId).emit('user-joined', socket.id);
+    // Notificar a los demás en el canal que un usuario se unió
+    socket.broadcast.to(channelId).emit('user-joined', {
+        signal: null, // No hay señal inicialmente cuando un usuario se une
+        callerID: socket.id, // Usar socket.id como callerID
+        userId: socket.userInfo._id // Opcional: incluir el ID del usuario
+    });
+    
+    // También puedes enviar la lista de usuarios actuales en el canal
+    const usersInChannel = [...io.sockets.adapter.rooms.get(channelId)];
+    socket.emit('all-users', usersInChannel);
+
+  console.log(`Usuario ${socket.id} se unió al canal ${channelId}`);
+
+  socket.on('signal', (data) => {
+    // Enviar la señal al usuario correspondiente
+    io.to(data.to).emit('signal', { from: socket.id, signal: data.signal });
+    console.log(socket)
+  });
+  
+  socket.on('leave-channel', (channelId) => {
+    socket.leave(channelId);
+    console.log(`Usuario ${socket.id} salió del canal ${channelId}.`);
+    // Notifica a los demás usuarios en el canal que un usuario salió
+    socket.broadcast.to(channelId).emit('user-left', socket.id);
+  });
+  
+
+ // Desconectar al usuario
+ socket.on('disconnect', () => {
+  console.log(`Cliente desconectado: ${socket.id}`);
+  if (userId) {
+    delete usuariosConectados[userId]; // Eliminar de la lista de conectados
+    io.emit('actualizarUsuariosConectados', Object.values(usuariosConectados));
+  }
 });
 
-socket.on('signal', (data) => {
-  // Enviar la señal al usuario correspondiente
-  io.to(data.to).emit('signal', { from: socket.id, signal: data.signal });
-  console.log(data)
 });
+
 
 socket.on('leave-channel', (channelId) => {
   socket.leave(channelId);
   console.log(`Usuario ${socket.id} salió del canal ${channelId}.`);
-
   // Notifica a los demás usuarios en el canal que un usuario salió
   socket.broadcast.to(channelId).emit('user-left', socket.id);
 });
@@ -251,6 +279,7 @@ socket.on('leave-channel', (channelId) => {
 
   // Desconectar al usuario
   socket.on('disconnect', () => {
+    console.log(`Cliente desconectado: ${socket.id}`);
     if (userId) {
       delete usuariosConectados[userId]; // Eliminar de la lista de conectados
       io.emit('actualizarUsuariosConectados', Object.values(usuariosConectados));

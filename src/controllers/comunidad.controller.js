@@ -129,7 +129,7 @@ controllers.eliminarComunidad = async (req, res) => {
     });
 
     if (!comunidad) {
-      console.log(req.administrador._id)
+   
       return res.status(404).send({ error: 'Comunidad no encontrada o no tiene permisos para eliminarla' });
     }
 
@@ -245,7 +245,6 @@ controllers.obtenerMensajes = async (req, res) => {
       path: 'mensajes',
       populate: { path: 'emisor receptor', select: 'nombre' } // Opción para cargar datos del emisor y receptor
     });
-console.log(canal)
     if (!canal) {
       return res.status(404).json({ error: 'Canal no encontrado' });
     }
