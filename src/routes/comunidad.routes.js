@@ -28,4 +28,9 @@ router.put('/canales/:canalId', auth, comunidadController.actualizarCanal);
 // Eliminar canal
 router.delete('/canales/:canalId', auth, comunidadController.eliminarCanal);
 
+router.post('/canales/:canalId/mensajes', comunidadController.enviarMensaje);
+
+// Obtener todos los mensajes de un canal
+router.get('/canales/:canalId/mensajes', comunidadController.obtenerMensajes);
+
 module.exports = router;

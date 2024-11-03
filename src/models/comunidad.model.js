@@ -30,6 +30,7 @@ const comunidadSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  
   visibilidad: {
     type: String,
     enum: ['publica', 'privada'],

@@ -18,6 +18,10 @@ const canalSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  mensajes: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Mensaje',  // Aquí se hace referencia al modelo Mensaje
+  }],
 });
 
 const Canal = mongoose.model('Canal', canalSchema);

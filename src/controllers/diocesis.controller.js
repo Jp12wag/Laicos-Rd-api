@@ -1,4 +1,5 @@
 const Diócesis = require('../models/diocesis.model');
+const logController = require('./log.controller');  
 
 // Crear una nueva diócesis
 exports.createDiocesis = async (req, res) => {
@@ -6,6 +7,12 @@ exports.createDiocesis = async (req, res) => {
         const { nombre, parroquias } = req.body;
         const nuevaDiocesis = new Diócesis({ nombre, parroquias });
         await nuevaDiocesis.save();
+        await logController.crearLog(
+            "Creación",
+            nuevaDiocesis._id,
+            "Se creó una nueva diocesis",
+            {nuevaDiocesis }
+          );
         res.status(201).json(nuevaDiocesis);
     } catch (error) {
         console.error(error);
@@ -46,6 +53,12 @@ exports.updateDiocesis = async (req, res) => {
         if (!diocesis) {
             return res.status(404).json({ message: 'Diócesis no encontrada' });
         }
+        await logController.crearLog(
+            "Actualizacion",
+            diocesis._id,
+            "Se actualizo diocesis",
+            {diocesis }
+          );
         res.json(diocesis);
     } catch (error) {
         console.error(error);
@@ -60,6 +73,13 @@ exports.deleteDiocesis = async (req, res) => {
         if (!diocesis) {
             return res.status(404).json({ message: 'Diócesis no encontrada' });
         }
+
+        await logController.crearLog(
+            "Elimino",
+            diocesis._id,
+            "Diócesis eliminada",
+            { diocesis }
+          );
         res.json({ message: 'Diócesis eliminada' });
     } catch (error) {
         console.error(error);

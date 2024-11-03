@@ -1,6 +1,7 @@
 const Actividad = require('../models/activity.model');
 require('dotenv').config();
 const CryptoJS = require('crypto-js');
+const logController = require('./log.controller');
 
 
 
@@ -10,11 +11,18 @@ exports.createActividad = async (req, res) => {
     const nuevaActividad = new Actividad(req.body);
      // Encriptar el ID de la actividad
      const idEncriptado = nuevaActividad._id.toString();
-     console.log(idEncriptado)
+   
      // Generar el enlace y actualizar el registro
      nuevaActividad.enlace = `http://localhost:3000/actividades/${idEncriptado}`;
 
     await nuevaActividad.save();
+
+    await logController.crearLog(
+      "Creación",
+      nuevaActividad._id,
+      "Se creó una actividad",
+      { nuevaActividad }
+    );
     res.status(201).json({ message: 'Actividad creada', actividad: nuevaActividad });
   } catch (error) {
     res.status(500).json({ message: 'Error al crear la actividad', error });
@@ -56,6 +64,13 @@ exports.updateActividad = async (req, res) => {
   try {
     const actividad = await Actividad.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!actividad) return res.status(404).json({ message: 'Actividad no encontrada' });
+
+    await logController.crearLog(
+      "Actualizacion",
+      actividad._id,
+      "Se actualizo una actividad",
+      { actividad }
+    );
     res.status(200).json({ message: 'Actividad actualizada', actividad });
   } catch (error) {
     res.status(500).json({ message: 'Error al actualizar la actividad', error });
@@ -67,6 +82,13 @@ exports.deleteActividad = async (req, res) => {
   try {
     const actividad = await Actividad.findByIdAndDelete(req.params.id);
     if (!actividad) return res.status(404).json({ message: 'Actividad no encontrada' });
+    
+    await logController.crearLog(
+      "Eliminado",
+      actividad._id,
+      "Se eliminado una actividad",
+      { actividad }
+    );
     res.status(200).json({ message: 'Actividad eliminada' });
   } catch (error) {
     res.status(500).json({ message: 'Error al eliminar la actividad', error });

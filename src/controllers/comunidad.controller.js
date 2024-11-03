@@ -1,6 +1,7 @@
 const Comunidad = require('../models/comunidad.model');
 const Admin = require('../models/administradores.model');
 const Canal = require('../models/Canal.model');
+const Mensaje = require('../models/mensaje.model');
 const controllers = {};
 
 // Crear comunidad a partir de un administrador
@@ -206,6 +207,52 @@ controllers.eliminarCanal = async (req, res) => {
     res.status(200).json({ message: 'Canal eliminado correctamente' });
   } catch (e) {
     res.status(400).json({ message: 'Error al eliminar el canal', error: e });
+  }
+};
+
+controllers.enviarMensaje = async (req, res) => {
+  try {
+    const { canalId } = req.params;
+    const { emisor, receptor, mensaje } = req.body;
+
+    // Crear un nuevo mensaje
+    const nuevoMensaje = new Mensaje({
+      emisor,
+      receptor,
+      mensaje,
+    });
+    const mensajeGuardado = await nuevoMensaje.save();
+
+    // Agregar el mensaje al canal
+    await Canal.findByIdAndUpdate(
+      canalId,
+      { $push: { mensajes: mensajeGuardado._id } },
+      { new: true }
+    );
+
+    res.status(201).json(mensajeGuardado);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al enviar el mensaje' });
+  }
+};
+
+controllers.obtenerMensajes = async (req, res) => {
+  try {
+    const { canalId } = req.params;
+
+    // Encontrar el canal y cargar los mensajes
+    const canal = await Canal.findById(canalId).populate({
+      path: 'mensajes',
+      populate: { path: 'emisor receptor', select: 'nombre' } // Opción para cargar datos del emisor y receptor
+    });
+console.log(canal)
+    if (!canal) {
+      return res.status(404).json({ error: 'Canal no encontrado' });
+    }
+
+    res.status(200).json(canal.mensajes);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener los mensajes del canal' });
   }
 };
 

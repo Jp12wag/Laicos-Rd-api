@@ -101,6 +101,7 @@ io.on('connection', (socket) => {
 
   // Agregar el usuario a la lista de conectados
   usuariosConectados[userId] = { socketId: socket.id, userInfo: socket.userInfo };
+  io.emit('actualizarUsuariosConectados', Object.values(usuariosConectados));
 
   // Unir al grupo de su parroquia
   socket.on('unirseGrupoParroquia', async ({ parroquiaId }) => {
@@ -152,6 +153,8 @@ socket.on('leave-channel', (channelId) => {
   // Emitir lista actualizada de usuarios conectados (sin incluir al usuario actual)
 
   socket.emit('actualizarUsuariosConectados', Object.values(usuariosConectados).filter(u => u.userInfo._id !== userId));
+
+
 
   // Enviar los mensajes no leídos cuando el usuario se conecta
   (async () => {
@@ -239,6 +242,13 @@ socket.on('leave-channel', (channelId) => {
       console.error('Error al enviar el mensaje:', error);
     }
   });
+
+  socket.on('verificarConexion', (userId, callback) => {
+    const isConnected = usuariosConectados.hasOwnProperty(userId);
+    console.log(usuariosConectados)
+    callback(isConnected);
+});
+
   // Desconectar al usuario
   socket.on('disconnect', () => {
     if (userId) {
@@ -250,6 +260,8 @@ socket.on('leave-channel', (channelId) => {
 
 
 });
+
+
 
 // Iniciar el servidor
 server.listen(PORT, () => {
