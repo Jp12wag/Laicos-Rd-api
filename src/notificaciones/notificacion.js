@@ -9,7 +9,7 @@ const enviarRecordatorios = async () => {
 // Configurar Nodemailer
 const transporter = nodemailer.createTransport({
   host: process.env.HOST,
-  port: 2525,
+  port: process.env.Puerto,
   auth: {
     user: process.env.EMAIL_USER, // Tu correo de Hotmail
     pass: process.env.EMAIL_PASS
@@ -70,6 +70,7 @@ const transporter = nodemailer.createTransport({
   });
 };
 
-// Programar la tarea para que se ejecute cada día a las 8 AM
+// Programar la tarea para que se ejecute cada día a las 11 y 7 minutos AM
 cron.schedule('07 11 * * *', enviarRecordatorios);
+cron.schedule('11 09 * * *', enviarRecordatorios);
 

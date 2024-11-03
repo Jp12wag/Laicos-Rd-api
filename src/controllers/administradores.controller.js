@@ -4,6 +4,8 @@ const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 const nodemailer = require('nodemailer');
 const controllers = {};
+const logController = require('./log.controller');
+
 
 controllers.createAdministrador = async (req, res) => {
   try {
@@ -12,10 +14,16 @@ controllers.createAdministrador = async (req, res) => {
     // Guarda el nuevo administrador
     await administrador.save();
 
+    await logController.crearLog(
+      "Creación Administrador",
+      administrador._id,
+      "Se creó un nuevo usuario",
+      { nombre: administrador.nombre }
+    );
     // Configuración del transportador de Nodemailer
     const transporter = nodemailer.createTransport({
       host: process.env.HOST,
-      port: 2525,
+      port: process.env.Puerto,
       auth: {
         user: process.env.EMAIL_USER, // Tu correo de Hotmail
         pass: process.env.EMAIL_PASS // La contraseña de tu correo
@@ -23,7 +31,7 @@ controllers.createAdministrador = async (req, res) => {
       logger: true, // Habilita el logging
       debug: true // Muestra información adicional sobre el proceso
     });
-
+    
     // Opciones del correo
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -34,7 +42,7 @@ controllers.createAdministrador = async (req, res) => {
               <p>Gracias por registrarte  en nuestra plataforma.</p>
               <p>Tu cuenta ha sido creada exitosamente. Puedes iniciar sesión utilizando tus credenciales.</p>
               <p>Saludos,</p>
-              <p>El equipo de la </p>
+              <p>El equipo de laicos Rd </p>
           `
     };
 
@@ -56,14 +64,14 @@ controllers.createAdministrador = async (req, res) => {
 };
 
 
-controllers.getAdministradores = async (req, res) => {
-  try {
-    const administradores = await Administrador.find();
-    res.status(200).json(administradores);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
+  controllers.getAdministradores = async (req, res) => {
+    try {
+      const administradores = await Administrador.find();
+      res.status(200).json(administradores);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  };
 
 controllers.getAdministradorById = async (req, res) => {
   try {
@@ -136,6 +144,16 @@ controllers.logoutadministrador = async (req, res) => {
   try {
     req.administrador.tokens = req.administrador.tokens.filter((token) => token.token !== req.token);
     await req.administrador.save();
+    await logController.crearLog(
+      "Cierre de Session",
+      req.administrador._id,
+      "Cerro una Session",
+      { nombre: req.administrador.nombre,
+        apellido: req.administrador.apellido
+       }
+    );
+
+
     res.send();
   } catch (e) {
     res.status(500).send(e);
@@ -171,6 +189,13 @@ controllers.updateAdministrador = async (req, res) => {
     }
     administradorActualizado.markModified('password');
     administradorActualizado.save();
+
+    await logController.crearLog(
+      "Actualizacion",
+      administradorActualizado._id,
+      "Actualizacion de Administradores",
+      { administradorActualizado }
+    );
     res.status(200).json(administradorActualizado);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -183,6 +208,13 @@ controllers.deleteAdministrador = async (req, res) => {
     if (!administrador) {
       return res.status(404).json({ message: 'Administrador no encontrado' });
     }
+
+    await logController.crearLog(
+      "Eliminacion",
+      administrador._id,
+      "Eliminacion de Administradores",
+      { administrador }
+    );
     res.status(200).json({ message: 'Administrador eliminado' });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -223,7 +255,7 @@ controllers.verificarToken = async (req, res) => {
       // Configuración del transportador de Nodemailer
       const transporter = nodemailer.createTransport({
         host: process.env.HOST,
-        port: 2525,
+        port: process.env.Puerto,
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS
@@ -272,7 +304,7 @@ controllers.requestResetPassword = async (req, res) => {
     // Configuración del transportador de Nodemailer
     const transporter = nodemailer.createTransport({
       host: process.env.HOST,
-      port: 2525,
+      port: process.env.Puerto,
       auth: {
         user: process.env.EMAIL_USER, // Tu correo de Hotmail
         pass: process.env.EMAIL_PASS
@@ -314,19 +346,23 @@ controllers.resetPassword = async (req, res) => {
   try {
     // Busca al administrador por el token y verifica que sea válido
     const administrador = await Administrador.findByPasswordResetToken(token);
-    console.log(administrador);
     if (!administrador) {
       return res.status(400).send({ error: 'Token de restablecimiento inválido o expirado.' });
     }
-  // Encripta la nueva contraseña
-   //administrador.password = await bcrypt.hash(newPassword);
-    // Actualiza la contraseña
+ 
     administrador.password = newPassword;
     administrador.markModified('password');
      // Elimina el token de restablecimiento
      administrador.passwordResetToken = null; 
      administrador.passwordResetTokenExpires = null; // También elimina la expiración
     await administrador.save();
+
+    await logController.crearLog(
+      "Cambio de Contraseña",
+      administrador._id,
+      "Contraseña Modificada",
+      { administrador }
+    );
 
     res.status(200).send({ message: 'Contraseña restablecida con éxito.' });
 
@@ -338,11 +374,8 @@ controllers.resetPassword = async (req, res) => {
 controllers.getSessions = async (req, res) => {
   try {
 
-    const adminId = req.params.id; // Asegúrate de que la ID del administrador esté disponible
-
+    const adminId = req.params.id;
     const administrador = await Administrador.findById(adminId);
-
-
     if (!administrador) {
       return res.status(404).json({ message: 'Administrador no encontrado' });
     }
@@ -351,7 +384,7 @@ controllers.getSessions = async (req, res) => {
       ...token,
       createdAt: administrador.updatedAt // Asegúrate de que existe este campo
     }));
-    console.log(sessions);
+    
     res.status(200).json(sessions);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener sesiones', error });

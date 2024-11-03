@@ -1,4 +1,5 @@
 const Arquidiocesis = require('../models/arquidiocesis.model');
+const logController = require('./log.controller');
 
 const controllers = {};
 
@@ -28,10 +29,16 @@ controllers.getArquidiocesisById = async (req, res) => {
 // Crear nueva Arquidiócesis
 controllers.createArquidiocesis = async (req, res) => {
   const arquidiocesis = new Arquidiocesis(req.body);
-  console.log(arquidiocesis )
+  
   try {
     const nuevaArquidiocesis = await arquidiocesis.save();
-    console.log("Nueva ar: ", nuevaArquidiocesis )
+    await logController.crearLog(
+      "Creacion",
+      nuevaArquidiocesis._id,
+      "Creacion Arquidiocesis",
+      { nuevaArquidiocesis }
+    );
+
     res.status(201).json(nuevaArquidiocesis);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -45,6 +52,12 @@ controllers.updateArquidiocesis = async (req, res) => {
     if (!arquidiocesisActualizada) {
       return res.status(404).json({ message: 'Arquidiócesis no encontrada' });
     }
+    await logController.crearLog(
+      "Actualizacion",
+      arquidiocesisActualizada._id,
+      "Actualizacion Arquidiocesis",
+      { arquidiocesisActualizada }
+    );
     res.status(200).json(arquidiocesisActualizada);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -58,6 +71,12 @@ controllers.deleteArquidiocesis = async (req, res) => {
     if (!arquidiocesis) {
       return res.status(404).json({ message: 'Arquidiócesis no encontrada' });
     }
+    await logController.crearLog(
+      "Eliminacion",
+      arquidiocesis._id,
+      "Eliminacion Arquidiocesis",
+      { arquidiocesis }
+    );
     res.status(200).json({ message: 'Arquidiócesis eliminada' });
   } catch (err) {
     res.status(500).json({ message: err.message });

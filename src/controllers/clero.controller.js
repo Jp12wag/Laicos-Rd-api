@@ -1,5 +1,6 @@
 
 const Clero = require('../models/clero.model');
+const logController = require('./log.controller');
 
 const controllers = {};
 
@@ -28,6 +29,13 @@ controllers.createClero = async (req, res) => {
   const clero = new Clero(req.body);
   try {
     const nuevoClero = await clero.save();
+
+    await logController.crearLog(
+      "Creación",
+      nuevoClero._id,
+      "Se creó un clero",
+      { nuevoClero}
+    );
     res.status(201).json(nuevoClero);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -40,6 +48,12 @@ controllers.updateClero = async (req, res) => {
     if (!cleroActualizado) {
       return res.status(404).json({ message: 'Clero no encontrado' });
     }
+    await logController.crearLog(
+      "Actualizacion",
+      cleroActualizado._id,
+      "Se actualizo un clero",
+      { cleroActualizado}
+    );
     res.status(200).json(cleroActualizado);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -52,6 +66,12 @@ controllers.deleteClero = async (req, res) => {
     if (!clero) {
       return res.status(404).json({ message: 'Clero no encontrado' });
     }
+    await logController.crearLog(
+      "Eliminado",
+      clero._id,
+      "Clero eliminado",
+      { clero}
+    );
     res.status(200).json({ message: 'Clero eliminado' });
   } catch (err) {
     res.status(500).json({ message: err.message });

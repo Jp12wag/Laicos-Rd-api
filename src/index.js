@@ -23,6 +23,7 @@ const routesMensaje = require('./routes/mensaje.routes');
 const routesConversaciones = require('./routes/conversacion.router');
 const Notificacion = require('./notificaciones/notificacion');
 const ChatGrupal = require('./routes/chatGrupal.routes');
+const Comunidad = require('./routes/comunidad.routes');
 
 
 const app = express();
@@ -63,6 +64,7 @@ app.use('/api/mensajes', routesMensaje);
 app.use('/api/', routesConversaciones);
 app.use('/api/solicitud', SolicitudRoutes);
 app.use('/api/chatGrupal', ChatGrupal);
+app.use('/api/comunidades', Comunidad)
 
 // Middleware JWT para Socket.io
 io.use(async (socket, next) => {
@@ -92,12 +94,14 @@ const usuariosConectados = {};
 // Evento principal de conexión
 io.on('connection', (socket) => {
   const userId = socket.userInfo._id;
-
+  console.log(`Nueva conexión de cliente: ${userId}`);
+  
   if (!userId) return;
   socket.join(userId);
 
   // Agregar el usuario a la lista de conectados
   usuariosConectados[userId] = { socketId: socket.id, userInfo: socket.userInfo };
+  io.emit('actualizarUsuariosConectados', Object.values(usuariosConectados));
 
   // Unir al grupo de su parroquia
   socket.on('unirseGrupoParroquia', async ({ parroquiaId }) => {
@@ -124,9 +128,61 @@ io.on('connection', (socket) => {
     io.to(grupoId).emit('nuevoMensajeGrupo', nuevoMensaje);
   });
 
+  socket.on('join-channel', (channelId) => {
+    socket.join(channelId);
+    console.log(`Usuario ${socket.id} se unió al canal ${channelId}.`);
+
+    // Notificar a los demás en el canal que un usuario se unió
+    socket.broadcast.to(channelId).emit('user-joined', {
+        signal: null, // No hay señal inicialmente cuando un usuario se une
+        callerID: socket.id, // Usar socket.id como callerID
+        userId: socket.userInfo._id // Opcional: incluir el ID del usuario
+    });
+    
+    // También puedes enviar la lista de usuarios actuales en el canal
+    const usersInChannel = [...io.sockets.adapter.rooms.get(channelId)];
+    socket.emit('all-users', usersInChannel);
+
+  console.log(`Usuario ${socket.id} se unió al canal ${channelId}`);
+
+  socket.on('signal', (data) => {
+    // Enviar la señal al usuario correspondiente
+    io.to(data.to).emit('signal', { from: socket.id, signal: data.signal });
+    console.log(socket)
+  });
+  
+  socket.on('leave-channel', (channelId) => {
+    socket.leave(channelId);
+    console.log(`Usuario ${socket.id} salió del canal ${channelId}.`);
+    // Notifica a los demás usuarios en el canal que un usuario salió
+    socket.broadcast.to(channelId).emit('user-left', socket.id);
+  });
+  
+
+ // Desconectar al usuario
+ socket.on('disconnect', () => {
+  console.log(`Cliente desconectado: ${socket.id}`);
+  if (userId) {
+    delete usuariosConectados[userId]; // Eliminar de la lista de conectados
+    io.emit('actualizarUsuariosConectados', Object.values(usuariosConectados));
+  }
+});
+
+});
+
+
+socket.on('leave-channel', (channelId) => {
+  socket.leave(channelId);
+  console.log(`Usuario ${socket.id} salió del canal ${channelId}.`);
+  // Notifica a los demás usuarios en el canal que un usuario salió
+  socket.broadcast.to(channelId).emit('user-left', socket.id);
+});
 
   // Emitir lista actualizada de usuarios conectados (sin incluir al usuario actual)
+
   socket.emit('actualizarUsuariosConectados', Object.values(usuariosConectados).filter(u => u.userInfo._id !== userId));
+
+
 
   // Enviar los mensajes no leídos cuando el usuario se conecta
   (async () => {
@@ -166,7 +222,7 @@ io.on('connection', (socket) => {
       }).sort({ fechaEnvio: 1 });
 
       socket.emit('historialMensajes', historial);
-      console.log(historial)
+   
     } catch (error) {
       console.error('Error al cargar el historial:', error);
     }
@@ -181,7 +237,7 @@ io.on('connection', (socket) => {
 
       // Enviar el historial de mensajes al cliente
       socket.emit('historialMensajes', historial);
-      console.log(historial);
+     
     } catch (error) {
       console.error('Error al cargar el historial:', error);
     }
@@ -204,9 +260,9 @@ io.on('connection', (socket) => {
           emisor: userId,
           mensaje,
           fechaEnvio: nuevoMensaje.fechaEnvio,
-          leido: false
+          leido: true
         });
-        console.log(usuariosConectados)
+      
       } else {
         console.log('Receptor no está conectado, el mensaje se guardará en la base de datos');
       }
@@ -215,10 +271,15 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('verificarConexion', (userId, callback) => {
+    const isConnected = usuariosConectados.hasOwnProperty(userId);
+    console.log(usuariosConectados)
+    callback(isConnected);
+});
 
   // Desconectar al usuario
   socket.on('disconnect', () => {
-    console.log('Cliente desconectado', socket.id);
+    console.log(`Cliente desconectado: ${socket.id}`);
     if (userId) {
       delete usuariosConectados[userId]; // Eliminar de la lista de conectados
       io.emit('actualizarUsuariosConectados', Object.values(usuariosConectados));
@@ -226,7 +287,10 @@ io.on('connection', (socket) => {
   });
 
 
+
 });
+
+
 
 // Iniciar el servidor
 server.listen(PORT, () => {
