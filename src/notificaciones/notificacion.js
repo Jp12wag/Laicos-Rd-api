@@ -31,7 +31,7 @@ const transporter = nodemailer.createTransport({
     fecha: { $gte: hoy, $lt: manana }
   }).populate('inscritos');
 
-  console.log(proximasActividades);
+  
   if (proximasActividades.length === 0) {
     console.log('No se encontraron actividades para hoy.');
   } else {
