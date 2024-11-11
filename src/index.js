@@ -90,14 +90,77 @@ io.use(async (socket, next) => {
 });
 
 const usuariosConectados = {};
+const canales = {};
 
 // Evento principal de conexión
 io.on('connection', (socket) => {
   const userId = socket.userInfo._id;
-  console.log(`Nueva conexión de cliente: ${userId}`);
-  
+
   if (!userId) return;
   socket.join(userId);
+
+
+  socket.on('join-channel', (canalId) => {
+    console.log(`se unió al canal: ${canalId}`);
+  
+    // Verifica si el usuario ya está en el canal
+    const usuarioExistente = canales[canalId]?.find(user => user.userId === userId);
+    if (usuarioExistente) {
+      console.log(`El usuario ${socket.userInfo.nombre} ya está en el canal ${canalId}`);
+      return;  // El usuario ya está en el canal, no hacer nada
+    }
+  
+    // Si no está en el canal, añadirlo
+    if (!canales[canalId]) {
+      canales[canalId] = [];
+    }
+  
+    canales[canalId].push({ userId, socketId: socket.id, nombreUsuario: socket.userInfo.nombre });
+  console.log(canales)
+    // Unir al canal en Socket.io
+    socket.join(canalId);
+  
+    // Emitir la lista de usuarios conectados en el canal a todos los miembros del canal
+    io.to(canalId).emit('users-in-channel', canales[canalId]);
+  
+    // Notificar a los demás usuarios en el canal
+    socket.broadcast.to(canalId).emit('user-joined', {
+      userName: socket.userInfo.nombre,
+      userId: socket.userInfo._id,
+      socketId: socket.id
+    });
+  
+
+    // Salir del canal
+    socket.on('leave-channel', (channelId) => {
+      socket.leave(channelId);
+      console.log(`Usuario ${socket.userInfo.nombre} salió del canal ${canalId}.`);
+      // Eliminar al usuario del canal
+      if (canales[canalId]) {
+        canales[canalId] = canales[canalId].filter(user => user.socketId !== socket.id);
+      }
+
+      // Emitir la lista de usuarios actualizada a todos los miembros del canal
+      io.to(canalId).emit('users-in-channel', canales[canalId]);
+
+      console.log(`Usuario ${socket.userInfo.nombre} salió del canal ${channelId}.`);
+
+      // Notificar a los demás usuarios en el canal que un usuario salió
+      socket.broadcast.to(channelId).emit('user-left', socket.id);
+    });
+
+
+
+  });
+  socket.on('sending-signal', (payload) => {
+    io.to(payload.to).emit('user-signal', {
+      signal: payload.signal,
+      from: payload.from
+    });
+  });
+
+
+
 
   // Agregar el usuario a la lista de conectados
   usuariosConectados[userId] = { socketId: socket.id, userInfo: socket.userInfo };
@@ -110,6 +173,8 @@ io.on('connection', (socket) => {
       socket.join(grupo._id.toString());
     }
   });
+
+
 
   // Enviar mensaje al grupo parroquial
   socket.on('enviarMensajeGrupo', async ({ grupoId, mensaje }) => {
@@ -128,55 +193,6 @@ io.on('connection', (socket) => {
     io.to(grupoId).emit('nuevoMensajeGrupo', nuevoMensaje);
   });
 
-  socket.on('join-channel', (channelId) => {
-    socket.join(channelId);
-    console.log(`Usuario ${socket.id} se unió al canal ${channelId}.`);
-
-    // Notificar a los demás en el canal que un usuario se unió
-    socket.broadcast.to(channelId).emit('user-joined', {
-        signal: null, // No hay señal inicialmente cuando un usuario se une
-        callerID: socket.id, // Usar socket.id como callerID
-        userId: socket.userInfo._id // Opcional: incluir el ID del usuario
-    });
-    
-    // También puedes enviar la lista de usuarios actuales en el canal
-    const usersInChannel = [...io.sockets.adapter.rooms.get(channelId)];
-    socket.emit('all-users', usersInChannel);
-
-  console.log(`Usuario ${socket.id} se unió al canal ${channelId}`);
-
-  socket.on('signal', (data) => {
-    // Enviar la señal al usuario correspondiente
-    io.to(data.to).emit('signal', { from: socket.id, signal: data.signal });
-    console.log(socket)
-  });
-  
-  socket.on('leave-channel', (channelId) => {
-    socket.leave(channelId);
-    console.log(`Usuario ${socket.id} salió del canal ${channelId}.`);
-    // Notifica a los demás usuarios en el canal que un usuario salió
-    socket.broadcast.to(channelId).emit('user-left', socket.id);
-  });
-  
-
- // Desconectar al usuario
- socket.on('disconnect', () => {
-  console.log(`Cliente desconectado: ${socket.id}`);
-  if (userId) {
-    delete usuariosConectados[userId]; // Eliminar de la lista de conectados
-    io.emit('actualizarUsuariosConectados', Object.values(usuariosConectados));
-  }
-});
-
-});
-
-
-socket.on('leave-channel', (channelId) => {
-  socket.leave(channelId);
-  console.log(`Usuario ${socket.id} salió del canal ${channelId}.`);
-  // Notifica a los demás usuarios en el canal que un usuario salió
-  socket.broadcast.to(channelId).emit('user-left', socket.id);
-});
 
   // Emitir lista actualizada de usuarios conectados (sin incluir al usuario actual)
 
@@ -222,7 +238,7 @@ socket.on('leave-channel', (channelId) => {
       }).sort({ fechaEnvio: 1 });
 
       socket.emit('historialMensajes', historial);
-   
+
     } catch (error) {
       console.error('Error al cargar el historial:', error);
     }
@@ -237,7 +253,7 @@ socket.on('leave-channel', (channelId) => {
 
       // Enviar el historial de mensajes al cliente
       socket.emit('historialMensajes', historial);
-     
+
     } catch (error) {
       console.error('Error al cargar el historial:', error);
     }
@@ -262,7 +278,7 @@ socket.on('leave-channel', (channelId) => {
           fechaEnvio: nuevoMensaje.fechaEnvio,
           leido: true
         });
-      
+
       } else {
         console.log('Receptor no está conectado, el mensaje se guardará en la base de datos');
       }
@@ -275,7 +291,7 @@ socket.on('leave-channel', (channelId) => {
     const isConnected = usuariosConectados.hasOwnProperty(userId);
     console.log(usuariosConectados)
     callback(isConnected);
-});
+  });
 
   // Desconectar al usuario
   socket.on('disconnect', () => {
@@ -293,6 +309,6 @@ socket.on('leave-channel', (channelId) => {
 
 
 // Iniciar el servidor
-server.listen(PORT, () => {
+server.listen(PORT,'0.0.0.0',() => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
