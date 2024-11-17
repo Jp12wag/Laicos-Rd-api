@@ -116,7 +116,7 @@ io.on('connection', (socket) => {
     }
   
     canales[canalId].push({ userId, socketId: socket.id, nombreUsuario: socket.userInfo.nombre });
-  console.log(canales)
+
     // Unir al canal en Socket.io
     socket.join(canalId);
   

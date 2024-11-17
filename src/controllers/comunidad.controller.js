@@ -23,6 +23,7 @@ controllers.crearComunidad = async (req, res) => {
     await comunidad.save();
 
     const canalesPorDefecto = [
+      { nombre: 'Información', tipo: 'texto', comunidad: comunidad._id },
       { nombre: 'General', tipo: 'texto', comunidad: comunidad._id },
       { nombre: 'Voz', tipo: 'voz', comunidad: comunidad._id },
     ];

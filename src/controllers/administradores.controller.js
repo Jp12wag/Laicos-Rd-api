@@ -292,8 +292,11 @@ controllers.verificarToken = async (req, res) => {
 
 controllers.requestResetPassword = async (req, res) => {
   const { email } = req.body;
+ 
+ 
   try {
     const administrador = await Administrador.findOne({ email });
+  
 
     if (!administrador) {
       return res.status(404).send({ error: 'Administrador no encontrado' });
@@ -354,7 +357,7 @@ controllers.resetPassword = async (req, res) => {
     administrador.markModified('password');
      // Elimina el token de restablecimiento
      administrador.passwordResetToken = null; 
-     administrador.passwordResetTokenExpires = null; // También elimina la expiración
+     administrador.passwordResetTokenExpires = null;
     await administrador.save();
 
     await logController.crearLog(
