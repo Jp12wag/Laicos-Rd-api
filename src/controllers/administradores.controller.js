@@ -187,7 +187,6 @@ controllers.updateAdministrador = async (req, res) => {
     if (!administradorActualizado) {
       return res.status(404).json({ message: 'Administrador no encontrado' });
     }
-    administradorActualizado.markModified('password');
     administradorActualizado.save();
 
     await logController.crearLog(
