@@ -17,7 +17,7 @@ const postSchema = new mongoose.Schema({
   likes: [{ 
     type: mongoose.Schema.Types.ObjectId,
      ref: 'admin' 
-    }], // IDs de usuarios que dieron like
+    }],
   comments: [{
     AdminId: { type: mongoose.Schema.Types.ObjectId, 
       ref: 'admin' },

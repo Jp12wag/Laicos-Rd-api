@@ -4,6 +4,7 @@ const cors = require('cors');
 const socketIo = require('socket.io');
 const jwt = require('jsonwebtoken');
 const connectDB = require('./db/conexion');
+const bodyParser = require('body-parser');
 
 // Modelos
 const Mensaje = require('./models/mensaje.model');
@@ -44,6 +45,7 @@ const corsOptions = {
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   allowedHeaders: 'Content-Type,Authorization',
   credentials: true,
+  maxAge: 3600,
 };
 
 // Conexión a la base de datos
@@ -52,7 +54,9 @@ connectDB();
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Rutas de la API
+
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use('/api/miembros', miembroRoutes);
 app.use('/api/administradores', administradorRoutes);
 app.use('/api/post', postRoutes);

@@ -24,7 +24,10 @@ const crearPost = async (req, res) => {
 const obtenerFeed = async (req, res) => {
   try {
     const publicaciones = await Post.find()
-      .populate('AdminId', 'nombre apellido')
+      .populate('AdminId', 'nombre apellido foto').populate({
+        path: 'comments.AdminId',
+        select: 'nombre apellido foto' // Selecciona solo los campos necesarios
+      })
       .sort({ createdAt: -1 });
 
     if (!publicaciones || publicaciones.length === 0) {
@@ -65,12 +68,14 @@ const comentarPost = async (req, res) => {
   try {
     const { comment } = req.body;
 
-    const publicacion = await Post.findById(req.params.id);
+    if (!comment || comment.trim() === "") {
+      return res.status(400).json({ error: "El comentario no puede estar vacío." });
+    }
 
+    const publicacion = await Post.findById(req.params.id);
     if (!publicacion) {
       return res.status(404).json({ error: 'Publicación no encontrada' });
     }
-
     publicacion.comments.push({
       AdminId: req.administrador._id,
       comment
