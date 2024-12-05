@@ -54,9 +54,8 @@ connectDB();
 app.use(cors(corsOptions));
 app.use(express.json());
 
-
-app.use(bodyParser.json({ limit: '250mb' }));
-app.use(bodyParser.urlencoded({ limit: '250mb', extended: true }));
+app.use('/uploads', express.static('uploads'));
+app.use(cors());
 app.use('/api/miembros', miembroRoutes);
 app.use('/api/administradores', administradorRoutes);
 app.use('/api/post', postRoutes);

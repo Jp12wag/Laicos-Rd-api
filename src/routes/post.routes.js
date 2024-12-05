@@ -1,10 +1,24 @@
 const express = require('express');
 const controllers = require('../controllers/post.controller');
 const auth = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+
 const router = express.Router();
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Aquí guardaremos los archivos
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // Genera un nombre único
+  }
+});
+
+const upload = multer({ storage: storage });
+
 // Ruta para crear una nueva publicación
-router.post('/', auth, controllers.crearPost);
+router.post('/', auth, upload.single('media'), controllers.crearPost);
 
 // Ruta para obtener todas las publicaciones (feed)
 router.get('/feed', auth, controllers.obtenerFeed);

@@ -1,16 +1,20 @@
 const Post = require('../models/post.model');
 
+
+
+
+
+
 // Crear una nueva publicación
 const crearPost = async (req, res) => {
   try {
-    const { content, media } = req.body;
-
+    const { content } = req.body;
+    const media = req.file ? `/uploads/${req.file.filename}` : null;
     const nuevaPublicacion = new Post({
       content,
       media,
       AdminId: req.administrador._id
     });
-
     await nuevaPublicacion.save();
     res.status(201).json(nuevaPublicacion);
   } catch (error) {
