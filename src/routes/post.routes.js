@@ -18,5 +18,8 @@ router.post('/comentar/:id', auth, controllers.comentarPost);
 router.delete('/:id', auth, controllers.borrarPublicacion); // Nueva ruta para borrar publicaciones
 
 router.put('/:id', auth, controllers.editarPublicacion);
+// Ruta para obtener publicaciones por usuario
+router.get('/feed/user/:userId', auth, controllers.obtenerFeedPorUsuario);
+
 
 module.exports = router;

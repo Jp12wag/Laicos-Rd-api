@@ -23,7 +23,7 @@ const obtenerFeed = async (req, res) => {
     const publicaciones = await Post.find()
       .populate('AdminId', 'nombre apellido foto').populate({
         path: 'comments.AdminId',
-        select: 'nombre apellido foto' // Selecciona solo los campos necesarios
+        select: 'nombre apellido foto' 
       })
       .sort({ createdAt: -1 });
 
@@ -128,6 +128,29 @@ const borrarPublicacion = async (req, res) => {
   }
 };
 
+const obtenerFeedPorUsuario = async (req, res) => {
+  try {
+    const { userId } = req.params; // Obtenemos el userId de los parámetros de la ruta
+
+    const publicaciones = await Post.find({ AdminId: userId })
+      .populate('AdminId', 'nombre apellido foto')
+      .populate({
+        path: 'comments.AdminId',
+        select: 'nombre apellido foto'
+      })
+      .sort({ createdAt: -1 });
+
+    if (!publicaciones || publicaciones.length === 0) {
+      return res.status(404).json({ message: 'No hay publicaciones disponibles para este usuario.' });
+    }
+
+    res.status(200).json(publicaciones);
+  } catch (error) {
+    console.error('Error al obtener el feed por usuario:', error);
+    res.status(500).json({ error: 'Error al obtener el feed por usuario' });
+  }
+};
+
 module.exports = {
   crearPost,
   obtenerFeed,
@@ -135,4 +158,5 @@ module.exports = {
   comentarPost,
   editarPublicacion,
   borrarPublicacion,
+  obtenerFeedPorUsuario,
 };

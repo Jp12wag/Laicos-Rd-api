@@ -55,8 +55,8 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 
-app.use(bodyParser.json({ limit: '150mb' }));
-app.use(bodyParser.urlencoded({ limit: '150mb', extended: true }));
+app.use(bodyParser.json({ limit: '250mb' }));
+app.use(bodyParser.urlencoded({ limit: '250mb', extended: true }));
 app.use('/api/miembros', miembroRoutes);
 app.use('/api/administradores', administradorRoutes);
 app.use('/api/post', postRoutes);
