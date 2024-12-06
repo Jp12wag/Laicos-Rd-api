@@ -155,6 +155,25 @@ const obtenerFeedPorUsuario = async (req, res) => {
   }
 };
 
+const obtenerComentarios = async (req, res) => {
+  try {
+    const { id } = req.params; // ID de la publicación
+
+    const publicacion = await Post.findById(id).populate({
+      path: 'comments.AdminId',
+      select: 'nombre apellido foto'
+    });
+
+    if (!publicacion) {
+      return res.status(404).json({ error: 'Publicación no encontrada' });
+    }
+
+    res.status(200).json(publicacion.comments);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener los comentarios' });
+  }
+};
+
 module.exports = {
   crearPost,
   obtenerFeed,
@@ -163,4 +182,5 @@ module.exports = {
   editarPublicacion,
   borrarPublicacion,
   obtenerFeedPorUsuario,
+  obtenerComentarios,
 };

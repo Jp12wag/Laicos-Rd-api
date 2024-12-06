@@ -28,6 +28,7 @@ router.post('/like/:id', auth, controllers.darLike);
 
 // Ruta para comentar en una publicación
 router.post('/comentar/:id', auth, controllers.comentarPost);
+router.get('/:id/comments', auth, controllers.obtenerComentarios);
 
 router.delete('/:id', auth, controllers.borrarPublicacion); // Nueva ruta para borrar publicaciones
 
