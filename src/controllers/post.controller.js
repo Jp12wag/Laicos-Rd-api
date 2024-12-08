@@ -87,7 +87,13 @@ const comentarPost = async (req, res) => {
     });
 
     await publicacion.save();
-    res.status(201).json({ message: 'Comentario agregado' });
+
+
+      res.status(201).json({
+      message: "Comentario agregado exitosamente.",
+      comments: publicacion.comments,
+    });
+    
   } catch (error) {
     res.status(500).json({ error: 'Error al agregar comentario' });
   }
