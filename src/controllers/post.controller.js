@@ -50,14 +50,18 @@ const darLike = async (req, res) => {
       return res.status(404).json({ error: 'Publicación no encontrada' });
     }
 
-    const yaDioLike = publicacion.likes.includes(req.administrador._id);
+    const userId = req.administrador._id;
+    const yaDioLike = publicacion.likes.includes(userId);
 
     if (!yaDioLike) {
-      publicacion.likes.push(req.administrador._id);
+      publicacion.likes.push(userId);
       await publicacion.save();
       res.status(200).json({ message: 'Like añadido' });
     } else {
-      res.status(400).json({ message: 'Ya diste like a esta publicación' });
+      publicacion.likes = publicacion.likes.filter(id => id.toString() !== userId.toString());
+      await publicacion.save();
+      res.status(200).json({ message: 'Like eliminado', likes: publicacion.likes });
+
     }
   } catch (error) {
     res.status(500).json({ error: 'Error al dar like' });
@@ -157,8 +161,7 @@ const obtenerFeedPorUsuario = async (req, res) => {
 
 const obtenerComentarios = async (req, res) => {
   try {
-    const { id } = req.params; // ID de la publicación
-
+    const { id } = req.params; 
     const publicacion = await Post.findById(id).populate({
       path: 'comments.AdminId',
       select: 'nombre apellido foto'
