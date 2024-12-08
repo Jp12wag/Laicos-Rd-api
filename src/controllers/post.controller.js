@@ -1,10 +1,6 @@
 const Post = require('../models/post.model');
 
 
-
-
-
-
 // Crear una nueva publicación
 const crearPost = async (req, res) => {
   try {
@@ -93,7 +89,7 @@ const comentarPost = async (req, res) => {
       message: "Comentario agregado exitosamente.",
       comments: publicacion.comments,
     });
-    
+
   } catch (error) {
     res.status(500).json({ error: 'Error al agregar comentario' });
   }
